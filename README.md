@@ -325,10 +325,24 @@ npm run preview    # 本地验证构建产物
 - 输出目录：`dist`
 - Node 版本：18 或更高
 
-### GitHub Pages
+### GitHub Pages（本项目现行方案）
 
-1. 推送源码后，用 Actions 执行 `npm ci && npm run build`，把 `dist/` 作为 Pages 产物发布。
-2. 由于 `base: './'` 使用相对路径，项目页（`https://<用户>.github.io/<仓库>/`）无需额外配置。
+- 线上地址：`https://10000101.xyz/zhangzhongjue/`
+- 单文件版（可直接下载后双击）：`https://10000101.xyz/zhangzhongjue/standalone.html`
+
+仓库只收源码（`dist/` 不入库），所以 **Pages 不能指向仓库根目录**：根目录的 `index.html` 是 Vite 源码入口，引用的是未编译的 `/src/main.tsx`，直接发布出去浏览器拿到 TSX 源码会一片白屏。因此仓库额外维护一个 `docs/` 发布目录：
+
+```bash
+npm run build                                   # 1. 产出 dist/
+rm -rf docs && cp -r dist docs && touch docs/.nojekyll   # 2. 同步到 docs/（.nojekyll 防 Jekyll 处理）
+npm run build:single                            # 3. 重建单文件版
+cp "dist-offline/掌中诀-单文件版.html" docs/standalone.html
+```
+
+Pages 设置路径：仓库 **Settings → Pages → Build and deployment**，Source 选 *Deploy from a branch*，Branch 选 `main`、目录选 **`/docs`** → Save。
+
+> `base: './'` 用的是相对路径，所以项目页挂在任意子路径（`/zhangzhongjue/`）都能正常加载资源。
+> 若以后改成 Actions 构建发布，只需把工作流产物指向 `dist/`，并在此处同步更新说明。
 
 ### Vercel / Netlify / 普通静态服务器
 
@@ -356,6 +370,12 @@ npm run build:single    # 再内联成 dist-offline/掌中诀-单文件版.html�
 `build:single` 把 `dist-offline/` 的 CSS、JS、favicon 全部内联进一个 `.html`，单个文件即可分发。
 它会把内联脚本强制放到 `</body>` 之前——内联 `<script>` 的 `defer` 会被浏览器忽略，
 若留在 `<head>` 就会在 `#root` 解析前执行，导致挂载失败（这个坑踩过，脚本里已注释）。
+
+> ⚠️ 另一个已经踩过的坑：`String.replace(pattern, replacement)` 的**替换串不是纯文本**，
+> 里面的 `$&`、`` $` ``、`$'`、`$$` 会被当成特殊指令；而压缩后的 JS 里 `$&` 这类序列极多，
+> 用字符串替换会把 500 KB 代码直接搅碎成语法错误（症状是白屏 + 控制台 `Unexpected token '<'`）。
+> 脚本现在一律用**函数式替换** `() => replacement`，并在写出前比对「内联段 === app.js 原文」、
+> 再用 Node 的 `vm.Script` 编译校验一遍，防止同类污染再次静默产出坏文件。
 
 > 代价：首屏需一次性加载全部代码（约 528 KB / gzip 174 KB），**日常部署仍请用 `npm run build`**；发送外链版时记得整个 `dist-offline/` 文件夹一起拷（`index.html` 需要同目录的 `app.js` 与 `app.css`），或直接发单文件版。
 
