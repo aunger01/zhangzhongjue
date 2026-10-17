@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="掌中诀">
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f2dda7" />
+      <stop offset="100%" stop-color="#c39a45" />
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="#0b1512" stroke="#d4a94f" stroke-width="2" />
+  <path d="M20 44 L20 22 M32 44 L32 16 M44 44 L44 26" stroke="url(#gold)" stroke-width="3.4" stroke-linecap="round" />
+  <circle cx="20" cy="30" r="3.6" fill="#f2dda7" />
+  <circle cx="32" cy="24" r="3.6" fill="#f2dda7" />
+  <circle cx="44" cy="34" r="3.6" fill="#f2dda7" />
+  <path d="M14 50 C24 54 40 54 50 50" stroke="#7d9c93" stroke-width="2" fill="none" stroke-linecap="round" />
+</svg>

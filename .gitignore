@@ -6,6 +6,9 @@ dist
 dist-offline
 dist-ssr
 
+# 例外：docs/ 是 GitHub Pages 的发布目录（由 dist 同步而来，故意入库），
+# 发布流程见 README「在线部署」一节：npm run build → 同步 dist 到 docs/ → 推仓。
+
 # 测试与覆盖率产物
 coverage
 test-results
