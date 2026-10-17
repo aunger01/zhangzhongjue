@@ -1,0 +1,251 @@
+/**
+ * 掌位图样式
+ * 手掌与指节全部为 SVG，随容器等比缩放，窄屏下自动适配且不互相遮挡。
+ */
+
+.palm-figure {
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.palm-svg {
+  display: block;
+  width: 100%;
+  max-width: 430px;
+  height: auto;
+  overflow: visible;
+}
+
+.palm-figure--hero .palm-svg {
+  max-width: 520px;
+  opacity: 0.92;
+}
+
+/* ---------- 手掌底色 ---------- */
+
+.palm-fill {
+  stroke: none;
+}
+
+.palm-fill--decorative {
+  opacity: 0.5;
+}
+
+.palm-outline {
+  fill: none;
+  stroke: rgba(212, 169, 79, 0.4);
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+}
+
+.palm-figure--hero .palm-outline {
+  stroke: rgba(212, 169, 79, 0.3);
+}
+
+.palm-crease {
+  fill: none;
+  stroke: rgba(212, 169, 79, 0.17);
+  stroke-width: 1.1;
+  stroke-linecap: round;
+}
+
+.knuckle-line {
+  stroke: rgba(212, 169, 79, 0.13);
+  stroke-width: 1;
+  stroke-dasharray: 3 4;
+}
+
+.finger-label {
+  fill: rgba(157, 176, 169, 0.72);
+  font-family: var(--font-serif);
+  font-size: 13px;
+  letter-spacing: 0.16em;
+}
+
+.finger-label--dim {
+  fill: rgba(157, 176, 169, 0.34);
+}
+
+/* ---------- 指节宫位单元格 ---------- */
+
+.cell {
+  cursor: default;
+}
+
+.cell[role='button'] {
+  cursor: pointer;
+}
+
+.cell__box {
+  fill: rgba(255, 255, 255, 0.022);
+  stroke: rgba(212, 169, 79, 0.18);
+  stroke-width: 1.2;
+  transition: fill var(--dur) ease, stroke var(--dur) ease, stroke-width var(--dur) ease,
+    filter var(--dur) ease;
+}
+
+.cell:hover .cell__box,
+.cell:focus-visible .cell__box {
+  stroke: rgba(212, 169, 79, 0.46);
+  fill: rgba(212, 169, 79, 0.06);
+}
+
+/* 已走过（本步骤路径） */
+.cell--visited .cell__box {
+  fill: rgba(212, 169, 79, 0.085);
+  stroke: rgba(212, 169, 79, 0.36);
+}
+
+/* 起宫 */
+.cell--start .cell__box {
+  stroke: rgba(125, 156, 147, 0.62);
+  stroke-dasharray: 5 4;
+}
+
+/* 外部联动高亮（九宫顺序列表悬停） */
+.cell--highlight .cell__box {
+  stroke: var(--gold-bright);
+  stroke-width: 2;
+  fill: rgba(212, 169, 79, 0.13);
+  filter: drop-shadow(0 0 6px rgba(212, 169, 79, 0.45));
+}
+
+/* 当前计数位置 */
+.cell--active-current .cell__box {
+  fill: rgba(242, 221, 167, 0.2);
+  stroke: var(--gold-bright);
+  stroke-width: 2.4;
+  filter: drop-shadow(0 0 7px rgba(212, 169, 79, 0.55));
+}
+
+/* 落宫 */
+.cell--landed .cell__box {
+  fill: rgba(242, 221, 167, 0.28);
+  stroke: var(--gold-bright);
+  stroke-width: 2.6;
+  filter: drop-shadow(0 0 12px rgba(242, 221, 167, 0.6));
+}
+
+/* 按吉凶基调给宫名上色（仅作辅助，状态另用文字标注） */
+.cell--auspicious .cell__name {
+  fill: #eadfc4;
+}
+
+.cell--mixed .cell__name {
+  fill: #bcd0c8;
+}
+
+.cell--inauspicious .cell__name {
+  fill: #d9b3a4;
+}
+
+.cell--landed .cell__name,
+.cell--active-current .cell__name {
+  fill: var(--gold-bright);
+}
+
+.cell__name {
+  font-family: var(--font-serif);
+  font-size: 19px;
+  letter-spacing: 0.1em;
+  pointer-events: none;
+  transition: fill var(--dur) ease;
+}
+
+.cell__order {
+  font-size: 11px;
+  fill: rgba(157, 176, 169, 0.6);
+  pointer-events: none;
+}
+
+.cell__flag {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  pointer-events: none;
+}
+
+.cell__flag--start {
+  fill: var(--teal);
+}
+
+.cell__flag--land {
+  fill: var(--gold-bright);
+}
+
+.cell__count {
+  font-size: 12px;
+  fill: var(--gold-bright);
+  letter-spacing: 0.04em;
+  pointer-events: none;
+}
+
+.cell__marks {
+  font-size: 11px;
+  fill: rgba(212, 169, 79, 0.7);
+  letter-spacing: 0.04em;
+  pointer-events: none;
+}
+
+.land-ring {
+  stroke: var(--gold-bright);
+  stroke-width: 2.4;
+  pointer-events: none;
+}
+
+/* ---------- 掐指指示器 ---------- */
+
+.pointer {
+  pointer-events: none;
+}
+
+.pointer__finger {
+  fill: rgba(242, 221, 167, 0.09);
+  stroke: rgba(242, 221, 167, 0.22);
+  stroke-width: 1.2;
+}
+
+.pointer__finger-edge {
+  fill: none;
+  stroke: rgba(242, 221, 167, 0.4);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+}
+
+.pointer__halo {
+  fill: var(--pointer-fill, rgba(212, 169, 79, 0.25));
+  opacity: 0.55;
+}
+
+.pointer__ring {
+  fill: none;
+  stroke: var(--gold-bright);
+  stroke-width: 2;
+  opacity: 0.9;
+}
+
+.pointer__core {
+  fill: var(--gold-bright);
+}
+
+.pointer--landed .pointer__ring {
+  stroke-width: 2.8;
+}
+
+.pointer--landed .pointer__halo {
+  opacity: 0.78;
+}
+
+/* ---------- 窄屏 ---------- */
+
+@media (max-width: 520px) {
+  .palm-svg {
+    max-width: 100%;
+  }
+
+  .cell__name {
+    font-size: 18px;
+  }
+}

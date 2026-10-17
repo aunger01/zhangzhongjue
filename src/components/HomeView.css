@@ -1,0 +1,275 @@
+.home {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding-bottom: 20px;
+}
+
+.home__hero {
+  position: relative;
+  padding: clamp(26px, 5vw, 56px) 0 clamp(20px, 4vw, 40px);
+  overflow: hidden;
+}
+
+.home__hero-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* 移动端顺序：标题 → 掌位图（含掌心悬浮按钮） */
+.home__intro {
+  order: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.home__visual {
+  order: 2;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/*
+ * 掌位图定位基准层：宽度与高度都严格等于手掌本身（max-width 与 .palm-svg 一致），
+ * 掌心百分比（56% / 62.5%）与手掌几何一一对应，任何一处尺寸变化都会同步。
+ */
+.home__palm {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+}
+
+.home__lead {
+  max-width: 46ch;
+  font-size: 15px;
+  line-height: 1.95;
+}
+
+/* ---------- 掌心悬浮入口 ----------
+ * 落位完全由屏幕宽度决定：
+ *   移动端 —— 浮在掌窗下方的留白带里（不与手掌叠在一起）；
+ *   桌面端 —— 排在掌图正下方，作为页面下半部的主行动按钮。
+ * 两个百分比是纯视觉落位常数，不参与任何算法推算。
+ */
+
+.home__entries {
+  position: absolute;
+  left: 56%;
+  top: 62.5%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+}
+
+.entry-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 19px 11px 13px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  background: linear-gradient(150deg, rgba(26, 45, 38, 0.94), rgba(9, 17, 14, 0.94));
+  backdrop-filter: blur(3px);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+  transition: transform var(--dur) ease, border-color var(--dur) ease, box-shadow var(--dur) ease,
+    background var(--dur) ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.entry-card:hover,
+.entry-card:focus-visible {
+  transform: translateY(-2px);
+  border-color: var(--gold);
+  background: linear-gradient(150deg, rgba(38, 62, 52, 0.96), rgba(13, 25, 20, 0.96));
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(212, 169, 79, 0.28);
+}
+
+.entry-card__mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 33px;
+  height: 33px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  border: 1px solid var(--line-strong);
+  background: linear-gradient(160deg, rgba(212, 169, 79, 0.24), rgba(212, 169, 79, 0.05));
+  font-family: var(--font-serif);
+  font-size: 16px;
+  line-height: 1;
+  color: var(--gold-bright);
+}
+
+.entry-card__label {
+  font-family: var(--font-serif);
+  font-size: 16.5px;
+  letter-spacing: 0.12em;
+  color: var(--rice);
+}
+
+/* ---------- 桌面端 ---------- */
+
+@media (min-width: 980px) {
+  .home__hero-inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 1.02fr);
+    grid-template-areas: 'intro visual';
+    align-items: center;
+    column-gap: clamp(24px, 4vw, 56px);
+  }
+
+  .home__intro {
+    grid-area: intro;
+  }
+
+  .home__visual {
+    grid-area: visual;
+    justify-content: center;
+  }
+
+  /* 桌机：入口不再压在掌心，改为落在掌图正下方那片留白里，
+   * 做大成两枚主行动按钮，把页面下半部的空旷填起来。 */
+  .home__entries {
+    position: static;
+    transform: none;
+    width: 100%;
+    justify-content: center;
+    gap: 18px;
+    margin-top: clamp(18px, 2.4vw, 34px);
+  }
+
+  .entry-card {
+    padding: 17px 30px 17px 21px;
+    gap: 14px;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
+  }
+
+  .entry-card__mark {
+    width: 42px;
+    height: 42px;
+    font-size: 19px;
+  }
+
+  .entry-card__label {
+    font-size: 19px;
+    letter-spacing: 0.16em;
+  }
+}
+
+/* ---------- 移动端一屏适配（≤979px）----------
+ * 目标：常见手机竖屏无需上下滑动即可看完全部内容。
+ * 手掌尺寸一律不动（与桌机同一套几何），只给 home__palm 一个「视窗高度」，
+ * 多出来的掌体下部与掌底被 overflow 裁在窗外 —— 裁切只削减占位高度，不缩放、不改宫位。
+ * 从视窗高度里让出一条 64px 的留白带，两枚入口悬浮在这条带上（手掌下方），
+ * 因此既不遮挡九宫宫名，也不与手掌贴在一起。
+ */
+
+@media (max-width: 979px) {
+  .home__hero {
+    padding: 12px 0 8px;
+  }
+
+  .home__hero-inner {
+    gap: 12px;
+  }
+
+  .home__intro {
+    gap: 8px;
+  }
+
+  .home__lead {
+    line-height: 1.7;
+  }
+
+  .home__visual {
+    padding-bottom: 64px;
+  }
+
+  .home__palm {
+    max-height: clamp(230px, calc(48dvh - 64px), 400px);
+    overflow: hidden;
+    /* 裁切口柔化：底部 18px 渐隐，掌缘截断不生硬 */
+    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 18px), transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 18px), transparent 100%);
+  }
+
+  /* 悬浮在掌窗下方留白带里：底部对齐 + 相对版面水平居中（不再对齐掌心 56%，
+   * 否则按钮组左窄右宽、两侧留白不等）；不压手掌。 */
+  .home__entries {
+    top: auto;
+    bottom: 6px;
+    left: 50%;
+    transform: translate(-50%, 0);
+  }
+}
+
+/* 窄屏：按钮轻微收小，但不至于缩小到"黏在掌上"的小胶囊 */
+@media (max-width: 420px) {
+  .home__entries {
+    gap: 9px;
+  }
+
+  .entry-card {
+    padding: 11px 16px 11px 12px;
+    gap: 8px;
+  }
+
+  .entry-card__mark {
+    width: 32px;
+    height: 32px;
+    font-size: 15.5px;
+  }
+
+  .entry-card__label {
+    font-size: 16px;
+    letter-spacing: 0.09em;
+  }
+}
+
+/* 矮屏（≤700px 高，如 iPhone SE）：垂直空间不足，无法在掌下再开一条悬浮带，
+ * 因此保留原始掌窗高度（手掌尽量大），按钮贴窗内下缘 —— 落在九宫宫名之下，不遮文案。 */
+@media (max-width: 979px) and (max-height: 700px) {
+  .home__visual {
+    padding-bottom: 0;
+  }
+
+  .home__palm {
+    max-height: 44dvh;
+  }
+
+  .home__entries {
+    bottom: 14px;
+  }
+
+  .home__hero {
+    padding: 6px 0 4px;
+  }
+
+  .home__hero-inner {
+    gap: 8px;
+  }
+
+  .home__intro {
+    gap: 5px;
+  }
+
+  .title-main {
+    font-size: clamp(27px, 7.6vw, 34px);
+  }
+
+  .home__lead {
+    font-size: 14px;
+    line-height: 1.55;
+  }
+}
