@@ -1,0 +1,120 @@
+.result-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.result-card--final {
+  border-color: var(--line-strong);
+  box-shadow: 0 20px 46px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(212, 169, 79, 0.14);
+}
+
+.result-card__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.result-card__palace {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.result-card__name {
+  font-size: clamp(28px, 4.4vw, 38px);
+  letter-spacing: 0.16em;
+  color: var(--gold-bright);
+}
+
+.result-card--inauspicious .result-card__name {
+  color: #e0a48c;
+}
+
+.result-card__order {
+  font-size: 13px;
+  color: var(--text-faint);
+}
+
+.result-card__summary {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.85;
+  color: var(--text-dim);
+}
+
+.result-card__facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 14px;
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line-soft);
+  background: rgba(6, 14, 12, 0.5);
+}
+
+.result-card__facts div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.result-card__facts dt {
+  font-size: 12.5px;
+  color: var(--text-faint);
+  letter-spacing: 0.1em;
+}
+
+.result-card__facts dd {
+  margin: 0;
+  font-size: 15px;
+  color: var(--text);
+}
+
+.result-card__landed {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  color: var(--gold-bright);
+  letter-spacing: 0.1em;
+}
+
+.result-card__toggle {
+  align-self: flex-start;
+}
+
+.result-card__path {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.result-card__path li {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: 8px;
+  border: 1px solid var(--line-soft);
+  background: rgba(8, 17, 14, 0.6);
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+
+.result-card__path li span {
+  font-size: 10.5px;
+  color: var(--text-faint);
+}
+
+.result-card__path li.is-landed {
+  border-color: var(--gold-bright);
+  background: rgba(242, 221, 167, 0.16);
+  color: var(--gold-bright);
+  font-family: var(--font-serif);
+}

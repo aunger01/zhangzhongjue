@@ -1,0 +1,25 @@
+# 依赖
+node_modules
+
+# 构建产物（仓库只收源码，产物由 npm run build / build:offline / build:single 现生）
+dist
+dist-offline
+dist-ssr
+
+# 测试与覆盖率产物
+coverage
+test-results
+playwright-report
+blob-report
+
+# 本地临时文件
+.vite
+*.local
+*.tsbuildinfo
+.tmp
+.tmp*
+*.log
+
+# 系统文件
+.DS_Store
+Thumbs.db

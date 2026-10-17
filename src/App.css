@@ -1,0 +1,73 @@
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.app__main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 结果页底部有固定操作条：整页（含页脚）留出避让高度，避免页脚被压在条下 */
+.app--docked {
+  padding-bottom: 76px;
+}
+
+/* 注意：本元素同时带 .container，而 globals.css 里的 `.container { padding: 0 … }`
+ * 简写会把单类选择器的 padding-top/bottom 覆盖成 0（样式加载顺序在原文件里更晚）。
+ * 因此这里必须用 `.container.app__form-view` 提高权重，间距才会真正生效。 */
+.container.app__form-view {
+  padding-top: clamp(26px, 4.4vw, 46px);
+  padding-bottom: clamp(24px, 4vw, 44px);
+  display: flex;
+  justify-content: center;
+}
+
+.app__form-view > * {
+  width: min(820px, 100%);
+}
+
+.footer__inner {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.footer__inner p {
+  margin: 0;
+}
+
+.footer__inner .row {
+  margin-top: 4px;
+}
+
+/* 页脚说明行：GitHub 图标 + 免责文字，图标与文字底线对齐 */
+.footer__note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.footer__gh {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  border: 1px solid var(--line-soft);
+  color: var(--text-faint);
+  transition: color var(--dur-fast) ease, border-color var(--dur-fast) ease,
+    background var(--dur-fast) ease;
+}
+
+.footer__gh:hover,
+.footer__gh:focus-visible {
+  color: var(--gold-bright);
+  border-color: var(--line-strong);
+  background: rgba(212, 169, 79, 0.1);
+}
