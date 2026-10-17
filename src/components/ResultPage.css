@@ -21,6 +21,18 @@
   letter-spacing: 0.14em;
 }
 
+/* 窄屏：标题为「月宫 X · 日宫 X · 时宫 X」，共 12 个汉字 + 2 个中点 + 5 个空格，
+ * 原 20px/0.14em 在 375px 屏需 ~350px 宽，而卡片内可用宽度仅 ~307px，末字被挤到下一行。
+ * 故在 ≤640px 收字号与字距：14 个全角位 × (1 + 0.06em) + 空格 ≈ 16.3em，
+ * 320px 屏（可用 252px）≈ 235px、375px 屏（可用 307px）≈ 276px，留 17~31px 余量。 */
+@media (max-width: 640px) {
+  .result__title {
+    font-size: clamp(13.5px, 4.5vw, 20px);
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+  }
+}
+
 .result__meta {
   display: flex;
   gap: 8px;
