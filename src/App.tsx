@@ -259,9 +259,8 @@ export default function App() {
         <div className="container footer__inner">
           <p className="faint footer__note">
             {/*
-             * TODO(仓库上线后)：把 href 换成真实仓库地址。
-             * 这里按既定命名（GitHub aunger01/zhangzhongjue，Public）预填，
-             * 仓库尚未创建前点击会 404，创建后核对 owner/仓库名再最终确认。
+             * 仓库地址已落定并核对：GitHub aunger01/zhangzhongjue（首版已推送）。
+             * 若日后仓库改名或迁移，此处与 README 中的仓库链接需同步更新。
              */}
             <a
               className="footer__gh"
