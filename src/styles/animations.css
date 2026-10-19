@@ -1,6 +1,6 @@
 /**
  * 掌中诀 · 动效清单
- * 首页轮廓淡入与低速流光、宫位高亮、卡片展开、掌纹描绘、
+ * 首页轮廓淡入与低速流光、宫位高亮、卡片展开、
  * 指示器移动、计数浮现、落宫光圈扩散、结果卡片依次出现。
  * 全部使用 CSS 与 SVG 实现，不引入动画库；并统一受 prefers-reduced-motion 约束。
  */
@@ -77,24 +77,6 @@
 .trace-line {
   stroke-dasharray: 900;
   animation: trace-flow 2.6s ease-out both;
-}
-
-/* ---------- 掌纹描绘 ---------- */
-
-@keyframes draw-crease {
-  from {
-    stroke-dashoffset: var(--crease-len, 420);
-    opacity: 0.2;
-  }
-  to {
-    stroke-dashoffset: 0;
-    opacity: 1;
-  }
-}
-
-.crease {
-  stroke-dasharray: var(--crease-len, 420);
-  animation: draw-crease 1.5s ease-out both;
 }
 
 /* ---------- 宫位高亮 ---------- */

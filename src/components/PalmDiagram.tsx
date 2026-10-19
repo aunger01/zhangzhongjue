@@ -1,8 +1,16 @@
 /**
  * 掌位图（SVG 主视觉）
  *
- * 掌心朝向用户的手掌矢量插画：食指在左、中指居中、无名指在右、小指与拇指为装饰。
- * 九个宫位严格贴合对应指节（不使用 3×3 方格代替）。
+ * 掌心朝向用户的手掌矢量插画：食指在左、中指居中、无名指在右、
+ * 小指与拇指为装饰。九个宫位严格贴合对应指节（不使用 3×3 方格代替）。
+ *
+ * 手形来自《九宫小六壬神掌》参考图矢量化（见 palmLayout.ts 头注）。
+ * 按圣上要求拆分为三个独立 SVG 分组，便于网页适配与交互：
+ *
+ *   <g class="palm-outline-group">  手掌轮廓：剪影填充 + 皮肤噪点 + 明暗 + 金线描边
+ *                                   （整组套底部渐隐 mask，腕部自然淡出）
+ *   <g class="palm-decor-group">    装饰线条：云纹卷草（裁剪进手形）/ 指节界金线
+ *   <g class="palace-cells">        九宫文字与宫牌（PalaceCell，交互层）
  *
  * 坐标来自 palmLayout（可独立调整），算法顺序来自 palaceConstants，
  * 两者解耦：改插画不会改变任何计算结果。
@@ -11,13 +19,9 @@
 import { PALACE_META } from '../features/divination/palaceConstants';
 import {
   CELL_LAYOUT,
-  FINGERS,
-  PALM_BODY_PATH,
-  PALM_CREASES,
+  CLOUD_CURLS,
+  HAND_PATH,
   PALM_VIEWBOX,
-  THUMB_PATH,
-  fingerLabelAnchor,
-  fingerPath,
   knuckleLines,
 } from '../features/divination/palmLayout';
 import { FingerPointer } from './FingerPointer';
@@ -72,7 +76,7 @@ export function PalmDiagram({
 }: PalmDiagramProps) {
   const prefix = `palm-${variant}`;
   const visited = new Set(visitedIndices);
-  const creaseLength = 520;
+  const knuckles = knuckleLines();
 
   const activeMeta = activeIndex !== null ? PALACE_META[activeIndex] : null;
   const ariaLabel = activeMeta
@@ -91,82 +95,118 @@ export function PalmDiagram({
       >
         <title>{ariaLabel}</title>
         <defs>
-          <radialGradient id={`${prefix}-skin`} cx="46%" cy="26%" r="78%">
-            <stop offset="0%" stopColor="#1b3129" />
-            <stop offset="58%" stopColor="#132420" />
-            <stop offset="100%" stopColor="#0a1613" />
+          {/* 手底色：墨绿径向渐变（左上受光，整体压暗） */}
+          <radialGradient id={`${prefix}-skin`} cx="0.42" cy="0.35" r="0.95">
+            <stop offset="0%" stopColor="#234a38" />
+            <stop offset="55%" stopColor="#163023" />
+            <stop offset="100%" stopColor="#0b1c14" />
           </radialGradient>
+          {/* 明暗叠加：左上暖光 → 右下沉暗 */}
+          <linearGradient
+            id={`${prefix}-shade`}
+            gradientUnits="userSpaceOnUse"
+            x1="80"
+            y1="0"
+            x2="380"
+            y2="640"
+          >
+            <stop offset="0%" stopColor="rgba(242, 221, 167, 0.07)" />
+            <stop offset="46%" stopColor="rgba(242, 221, 167, 0.01)" />
+            <stop offset="100%" stopColor="rgba(0, 0, 0, 0.3)" />
+          </linearGradient>
           <radialGradient id={`${prefix}-pointer`} cx="50%" cy="50%" r="50%">
             <stop offset="0%" stopColor="rgba(242, 221, 167, 0.42)" />
             <stop offset="70%" stopColor="rgba(212, 169, 79, 0.12)" />
             <stop offset="100%" stopColor="rgba(212, 169, 79, 0)" />
           </radialGradient>
+          {/* 皮肤噪点质感：细密磨砂，模拟线描版画的纸面颗粒 */}
+          <filter id={`${prefix}-grain`} x="0" y="0" width="100%" height="100%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7" stitchTiles="stitch" />
+            <feColorMatrix
+              type="matrix"
+              values="0 0 0 0 0.83  0 0 0 0 0.66  0 0 0 0 0.31  0 0 0 0.55 0"
+            />
+          </filter>
+          {/* 金色发光（装饰线条共用） */}
+          <filter id={`${prefix}-glow`} x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur stdDeviation="2" result="b" />
+            <feMerge>
+              <feMergeNode in="b" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+          <clipPath id={`${prefix}-hand-clip`}>
+            <path d={HAND_PATH} />
+          </clipPath>
+          {/* 底部渐隐：从掌心下方开始淡出，至腕底（y≈622）完全透明 */}
+          <linearGradient
+            id={`${prefix}-fade`}
+            gradientUnits="userSpaceOnUse"
+            x1="0"
+            y1="384"
+            x2="0"
+            y2="622"
+          >
+            <stop offset="0%" stopColor="#fff" />
+            <stop offset="0.45" stopColor="#fff" stopOpacity="0.72" />
+            <stop offset="100%" stopColor="#fff" stopOpacity="0" />
+          </linearGradient>
+          <mask
+            id={`${prefix}-fade-mask`}
+            maskUnits="userSpaceOnUse"
+            x={PALM_VIEWBOX.minX}
+            y={PALM_VIEWBOX.minY}
+            width={PALM_VIEWBOX.width}
+            height={PALM_VIEWBOX.height}
+          >
+            <rect
+              x={PALM_VIEWBOX.minX}
+              y={PALM_VIEWBOX.minY}
+              width={PALM_VIEWBOX.width}
+              height={PALM_VIEWBOX.height}
+              fill={`url(#${prefix}-fade)`}
+            />
+          </mask>
         </defs>
 
-        {/* 手掌底色与掌纹 */}
-        <g className={variant === 'hero' ? 'palm-base palm-emerge' : 'palm-base'}>
-          <path className="palm-fill" d={PALM_BODY_PATH} fill={`url(#${prefix}-skin)`} />
-          <path className="palm-fill" d={THUMB_PATH} fill={`url(#${prefix}-skin)`} />
-          {FINGERS.map((finger) => (
-            <path
-              key={`finger-${finger.id}`}
-              className={`palm-fill ${finger.decorative ? 'palm-fill--decorative' : ''}`}
-              d={fingerPath(finger)}
-              fill={`url(#${prefix}-skin)`}
+        {/* ═══ 第 1 层：手掌轮廓（独立分组，底部渐隐） ═══ */}
+        <g
+          className={variant === 'hero' ? 'palm-outline-group palm-base palm-emerge' : 'palm-outline-group palm-base'}
+          mask={`url(#${prefix}-fade-mask)`}
+        >
+          <path className="palm-fill" d={HAND_PATH} fill={`url(#${prefix}-skin)`} />
+          <g clipPath={`url(#${prefix}-hand-clip)`}>
+            <rect
+              className="palm-grain"
+              x={PALM_VIEWBOX.minX}
+              y={PALM_VIEWBOX.minY}
+              width={PALM_VIEWBOX.width}
+              height={PALM_VIEWBOX.height}
+              filter={`url(#${prefix}-grain)`}
             />
-          ))}
+          </g>
+          <path className="palm-shade" d={HAND_PATH} fill={`url(#${prefix}-shade)`} />
+          {/* 金线描边：主描边 + 极淡亮金内衬（pathLength 归一化供描绘动画） */}
+          <path className="palm-outline trace-line" d={HAND_PATH} pathLength={900} />
+          <path className="palm-outline-inner" d={HAND_PATH} />
+        </g>
 
-          {PALM_CREASES.map((d, index) => (
-            <path
-              key={`crease-${index}`}
-              className="palm-crease crease"
-              d={d}
-              style={{ ['--crease-len' as string]: `${creaseLength}` }}
-            />
-          ))}
+        {/* ═══ 第 2 层：装饰线条（独立分组，随掌形底部渐隐） ═══ */}
+        <g className="palm-decor-group" mask={`url(#${prefix}-fade-mask)`}>
+          {/* 云纹卷草：裁剪进手形（不画掌纹——掌纹涉相学定论，留白胜过臆造） */}
+          <g clipPath={`url(#${prefix}-hand-clip)`}>
+            {CLOUD_CURLS.map((d, index) => (
+              <path key={`curl-${index}`} className="palm-curl" d={d} />
+            ))}
+          </g>
 
-          {knuckleLines().map((line, index) => (
-            <line
-              key={`knuckle-${index}`}
-              className="knuckle-line"
-              x1={line.x1}
-              y1={line.y1}
-              x2={line.x2}
-              y2={line.y2}
-            />
-          ))}
-
-          {/* 掌形轮廓（描边在最上层，保证边缘清晰） */}
-          <path className="palm-outline trace-line" d={PALM_BODY_PATH} />
-          <path className="palm-outline trace-line" d={THUMB_PATH} />
-          {FINGERS.map((finger) => (
-            <path
-              key={`outline-${finger.id}`}
-              className="palm-outline trace-line"
-              d={fingerPath(finger)}
-            />
+          {/* 指节界金线（宫牌之间的关节弧线） */}
+          {knuckles.map((d, index) => (
+            <path key={`knuckle-${index}`} className="palm-knuckle-line" d={d} />
           ))}
         </g>
 
-        {/* 手指名称标注 */}
-        <g className="finger-labels" aria-hidden="true">
-          {FINGERS.map((finger) => {
-            const anchor = fingerLabelAnchor(finger);
-            return (
-              <text
-                key={`label-${finger.id}`}
-                className={finger.decorative ? 'finger-label finger-label--dim' : 'finger-label'}
-                x={anchor.x}
-                y={anchor.y}
-                textAnchor="middle"
-              >
-                {anchor.label}
-              </text>
-            );
-          })}
-        </g>
-
-        {/* 九宫指节 */}
+        {/* ═══ 第 3 层：九宫文字与宫牌（独立分组，交互层） ═══ */}
         <g className="palace-cells">
           {CELL_LAYOUT.map((cell) => (
             <PalaceCell

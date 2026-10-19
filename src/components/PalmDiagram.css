@@ -1,6 +1,7 @@
 /**
  * 掌位图样式
  * 手掌与指节全部为 SVG，随容器等比缩放，窄屏下自动适配且不互相遮挡。
+ * 分层：palm-outline-group（轮廓）/ palm-decor-group（装饰）/ palace-cells（宫牌）。
  */
 
 .palm-figure {
@@ -24,52 +25,65 @@
   opacity: 0.92;
 }
 
-/* ---------- 手掌底色 ---------- */
+/* ---------- 第 1 层：手掌轮廓 ---------- */
 
 .palm-fill {
   stroke: none;
-}
-
-.palm-fill--decorative {
-  opacity: 0.5;
+  /* 整体压暗：掌体微透，融入背景 */
+  fill-opacity: 0.9;
 }
 
 .palm-outline {
   fill: none;
-  stroke: rgba(212, 169, 79, 0.4);
-  stroke-width: 1.6;
+  stroke: rgba(201, 164, 79, 0.78);
+  stroke-width: 2;
   stroke-linejoin: round;
+  filter: drop-shadow(0 0 6px rgba(212, 169, 79, 0.3));
+}
+
+/* 亮金内衬细线（贴着主描边内侧的柔光） */
+.palm-outline-inner {
+  fill: none;
+  stroke: rgba(233, 207, 143, 0.32);
+  stroke-width: 0.8;
+  stroke-linejoin: round;
+  pointer-events: none;
 }
 
 .palm-figure--hero .palm-outline {
-  stroke: rgba(212, 169, 79, 0.3);
+  stroke: rgba(201, 164, 79, 0.5);
 }
 
-.palm-crease {
+/* ---------- 第 2 层：装饰线条 ---------- */
+
+/* 云纹卷草 */
+.palm-curl {
   fill: none;
-  stroke: rgba(212, 169, 79, 0.17);
+  stroke: rgba(212, 169, 79, 0.5);
   stroke-width: 1.1;
   stroke-linecap: round;
 }
 
-.knuckle-line {
-  stroke: rgba(212, 169, 79, 0.13);
+/* 指节界金线（宫牌之间的关节弧线） */
+.palm-knuckle-line {
+  fill: none;
+  stroke: rgba(212, 169, 79, 0.5);
   stroke-width: 1;
-  stroke-dasharray: 3 4;
+  stroke-linecap: round;
 }
 
-.finger-label {
-  fill: rgba(157, 176, 169, 0.72);
-  font-family: var(--font-serif);
-  font-size: 13px;
-  letter-spacing: 0.16em;
+/* 皮肤噪点（细密磨砂颗粒，模拟线描版画纸面） */
+.palm-grain {
+  opacity: 0.055;
+  pointer-events: none;
 }
 
-.finger-label--dim {
-  fill: rgba(157, 176, 169, 0.34);
+/* 明暗 overlay：左上暖光 → 右下沉暗（随整手剪影） */
+.palm-shade {
+  pointer-events: none;
 }
 
-/* ---------- 指节宫位单元格 ---------- */
+/* ---------- 第 3 层：宫牌（参考图"牌位卡"样式） ---------- */
 
 .cell {
   cursor: default;
@@ -80,50 +94,63 @@
 }
 
 .cell__box {
-  fill: rgba(255, 255, 255, 0.022);
-  stroke: rgba(212, 169, 79, 0.18);
-  stroke-width: 1.2;
+  fill: rgba(14, 32, 24, 0.55);
+  stroke: rgba(212, 169, 79, 0.85);
+  stroke-width: 1.6;
   transition: fill var(--dur) ease, stroke var(--dur) ease, stroke-width var(--dur) ease,
     filter var(--dur) ease;
 }
 
+.cell__box-inner {
+  fill: none;
+  stroke: rgba(212, 169, 79, 0.55);
+  stroke-width: 0.7;
+  pointer-events: none;
+  transition: stroke var(--dur) ease;
+}
+
 .cell:hover .cell__box,
 .cell:focus-visible .cell__box {
-  stroke: rgba(212, 169, 79, 0.46);
-  fill: rgba(212, 169, 79, 0.06);
+  stroke: #e9cf8f;
+  fill: rgba(212, 169, 79, 0.12);
+}
+
+.cell:hover .cell__box-inner,
+.cell:focus-visible .cell__box-inner {
+  stroke: rgba(233, 207, 143, 0.8);
 }
 
 /* 已走过（本步骤路径） */
 .cell--visited .cell__box {
-  fill: rgba(212, 169, 79, 0.085);
-  stroke: rgba(212, 169, 79, 0.36);
+  fill: rgba(212, 169, 79, 0.16);
+  stroke: rgba(233, 207, 143, 0.95);
 }
 
 /* 起宫 */
 .cell--start .cell__box {
-  stroke: rgba(125, 156, 147, 0.62);
+  stroke: rgba(125, 156, 147, 0.85);
   stroke-dasharray: 5 4;
 }
 
 /* 外部联动高亮（九宫顺序列表悬停） */
 .cell--highlight .cell__box {
   stroke: var(--gold-bright);
-  stroke-width: 2;
-  fill: rgba(212, 169, 79, 0.13);
-  filter: drop-shadow(0 0 6px rgba(212, 169, 79, 0.45));
+  stroke-width: 2.2;
+  fill: rgba(212, 169, 79, 0.2);
+  filter: drop-shadow(0 0 7px rgba(212, 169, 79, 0.5));
 }
 
 /* 当前计数位置 */
 .cell--active-current .cell__box {
-  fill: rgba(242, 221, 167, 0.2);
+  fill: rgba(242, 221, 167, 0.24);
   stroke: var(--gold-bright);
   stroke-width: 2.4;
-  filter: drop-shadow(0 0 7px rgba(212, 169, 79, 0.55));
+  filter: drop-shadow(0 0 8px rgba(212, 169, 79, 0.55));
 }
 
 /* 落宫 */
 .cell--landed .cell__box {
-  fill: rgba(242, 221, 167, 0.28);
+  fill: rgba(242, 221, 167, 0.3);
   stroke: var(--gold-bright);
   stroke-width: 2.6;
   filter: drop-shadow(0 0 12px rgba(242, 221, 167, 0.6));
@@ -135,11 +162,11 @@
 }
 
 .cell--mixed .cell__name {
-  fill: #bcd0c8;
+  fill: #d4e0d6;
 }
 
 .cell--inauspicious .cell__name {
-  fill: #d9b3a4;
+  fill: #dfc0ae;
 }
 
 .cell--landed .cell__name,
@@ -149,15 +176,21 @@
 
 .cell__name {
   font-family: var(--font-serif);
-  font-size: 19px;
-  letter-spacing: 0.1em;
+  font-size: 18px;
+  letter-spacing: 0.14em;
   pointer-events: none;
   transition: fill var(--dur) ease;
 }
 
+/* 远节指节较窄，宫名略缩 */
+.cell--distal .cell__name {
+  font-size: 16.5px;
+}
+
 .cell__order {
-  font-size: 11px;
-  fill: rgba(157, 176, 169, 0.6);
+  font-family: var(--font-serif);
+  font-size: 12px;
+  fill: rgba(233, 207, 143, 0.85);
   pointer-events: none;
 }
 
@@ -246,6 +279,10 @@
   }
 
   .cell__name {
-    font-size: 18px;
+    font-size: 17px;
+  }
+
+  .cell--distal .cell__name {
+    font-size: 15.5px;
   }
 }
