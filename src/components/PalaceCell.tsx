@@ -56,6 +56,7 @@ export function PalaceCell({
   const meta = getPalaceMeta(cell.index);
   const classNames = [
     'cell',
+    `cell--${cell.segment}`,
     OMEN_CLASS[meta.omen],
     active ? 'cell--active-current' : '',
     visited ? 'cell--visited' : '',
@@ -91,14 +92,24 @@ export function PalaceCell({
       onClick={interactive ? handleActivate : undefined}
       onKeyDown={handleKeyDown}
     >
+      {/* 宫牌：外框 + 内衬双线（参考图"牌位卡"样式） */}
       <rect
         className="cell__box"
         x={cell.x}
         y={cell.y}
         width={cell.width}
         height={cell.height}
-        rx={12}
-        ry={12}
+        rx={9}
+        ry={9}
+      />
+      <rect
+        className="cell__box-inner"
+        x={cell.x + 3}
+        y={cell.y + 3}
+        width={cell.width - 6}
+        height={cell.height - 6}
+        rx={6.5}
+        ry={6.5}
       />
 
       {landed && !reducedMotion ? (
@@ -112,8 +123,8 @@ export function PalaceCell({
         />
       ) : null}
 
-      {/* 序号（左上） */}
-      <text className="cell__order" x={cell.x + 11} y={cell.y + 15} textAnchor="middle">
+      {/* 序号（顶部居中，参考图样式） */}
+      <text className="cell__order" x={cell.cx} y={cell.y + 17} textAnchor="middle">
         {meta.order}
       </text>
 
@@ -129,8 +140,8 @@ export function PalaceCell({
         </text>
       )}
 
-      {/* 宫名 */}
-      <text className="cell__name" x={cell.cx} y={cell.cy + 4} textAnchor="middle">
+      {/* 宫名（居中偏下，让位顶部序号） */}
+      <text className="cell__name" x={cell.cx} y={cell.cy + 12} textAnchor="middle">
         {meta.name}
       </text>
 
