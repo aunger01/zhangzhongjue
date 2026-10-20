@@ -126,8 +126,8 @@ describe('文字心念起卦完整流程', () => {
     const submit = q<HTMLButtonElement>('text-submit');
     expect(submit.disabled).toBe(true);
 
-    await typeText('text-input', '此事可否从速落定');
-    expect(q('text-count').textContent).toContain('8 字');
+    await typeText('text-input', '此事可');
+    expect(q('text-count').textContent).toContain('3 字');
     expect(q<HTMLButtonElement>('text-submit').disabled).toBe(false);
 
     const numbersText = q('text-numbers').querySelector('strong')?.textContent ?? '';
@@ -205,8 +205,9 @@ describe('说明弹层', () => {
     const modal = q('modal');
     expect(modal.textContent).toContain('九宫定义');
     expect(modal.textContent).toContain('(startIndex + count - 1) % 9');
-    expect(modal.textContent).toContain('文字心念取数法');
-    expect(modal.textContent).toContain('不是');
+    expect(modal.textContent).toContain('文字取数法（传统汉字起课）');
+    expect(modal.textContent).toContain('由您自己写下一至三个汉字');
+    expect(modal.textContent).toContain('不敢自称某部古籍原貌');
     expect(modal.textContent).toContain('不构成');
   });
 });

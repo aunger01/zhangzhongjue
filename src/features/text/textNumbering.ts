@@ -1,8 +1,13 @@
 /**
- * 文字心念起数法（本网站的自定义扩展玩法）
+ * 文字心念起数法（旧的码点取数法）
  *
- * ⚠️ 本取数法不是传统九宫小六壬古法，页面规则说明中已公开。
- * 规则（与需求文档 6.2 完全一致）：
+ * ⚠️ 2026-10-19 起已被 `strokeNumbering.ts`（传统汉字起课）取代，表单不再调用 `textToNumbers()`。
+ *    本文件保留两个用途：
+ *      1. 通用文本工具：`extractHanCharacters` / `countHanCharacters` / `validateTextInput` 仍被新流程使用；
+ *      2. 作为可回退的旧口径：若需切回码点法，只需让 TextForm 改回调用 `textToNumbers()`。
+ *    其中的 `textToNumbers` 与 `normalizeToRange` 已无生产调用，仅由 `textNumbering.test.ts` 覆盖。
+ *
+ * 原说明：
  *   1. 对文本执行 Unicode NFC 规范化；
  *   2. 提取有效汉字序列，得到字符数 N；
  *   3. A = N；

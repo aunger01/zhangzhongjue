@@ -5,7 +5,13 @@
 >
 > 面向访客/使用者的说明请看同目录 [`README.md`](./README.md)；本文件专注**过程、决策、坑与纪律**。
 >
-> 最后更新：2026-10-17 · 对应版本 `v1.0.0`（已入库 GitHub）
+> 最后更新：2026-10-20 · 对应版本 `v1.1.0`（已入库 GitHub）
+
+> **v1.1.0 变更摘要（接手前必读）**：新增**文字起课**——用户自己写 1～3 个汉字，按简体规范笔顺的笔画起数；
+> 超过三字一律拒绝、**程序不替用户截取**（取字即取象，属用户决定）。旧的「字符数 + Unicode 码点」取数法**已退役**。
+> **九宫顺序、起宫规则、落宫公式自 v1.0.0 起一字未改**，故历史记录可跨版本对读。
+> 涉及模块：新增 `features/text/strokeNumbering.ts`（取数入口）、`strokeTable.ts`（笔画表，生成物）、
+> `scripts/gen-stroke-table.mjs`（生成脚本），`TextForm.tsx` 与 `GuideModal.tsx` 重写文案。
 
 ---
 
@@ -14,12 +20,12 @@
 | 项目 | 内容 |
 | --- | --- |
 | 是什么 | 「九宫小六壬」掌诀互动网站：输入生辰或心念文字 → 换算三个数字 → 九宫连续起宫推演 → 掌位图掐指动画 → 结果与解读 |
-| 在哪 | `掌中诀网站开发/palm-oracle/`（本目录） |
+| 在哪 | 本仓库根目录（`git clone` 后的任意路径均可，不要写死成某个本地目录名） |
 | 技术栈 | React 18 + TypeScript + Vite 5 + Vitest 2 + Playwright 1.64；**纯前端，零后端、零数据库、零付费 API** |
 | 依赖 | 运行时只有 `react` / `react-dom` / `lunar-javascript` 三个 |
 | 怎么跑 | `npm install` → `npm run dev`（5173）；`npm run test:serial`；`npm run build`；`npm run preview`（4173） |
-| 验收基线（交付门禁） | `npm run typecheck` + 单测 **8 文件 / 141 项**全绿 + `npm run build` + `npm run build:offline`(+`build:single`) |
-| E2E（可选） | Playwright 34 项，保留作回归用；依赖浏览器内核与预览服务，**不作为交付门禁** |
+| 验收基线（交付门禁） | `npm run typecheck` + 单测 **9 文件 / 163 项**全绿 + `npm run build` + `npm run build:offline`(+`build:single`) |
+| E2E（可选） | Playwright 17 条用例 × 桌面/移动两项目 = 34 项，保留作回归用；**不作为交付门禁**（2026-10-20 桌面端实测 17/17） |
 | 🔴 强制验收案例 | 农历五月二十日、丑时，起数 **5、20、2** → **小吉 / 空亡 / 病符**（真实算法，零硬编码） |
 
 ### 三条铁律（违反任何一条即为事故）
@@ -45,7 +51,7 @@
 | 4 | 必须返回完整路径 | `pathIndices` 长度 **=== `inputNumber`**，首项 = 起宫，末项 = 落宫 |
 | 5 | 动画不得自行推算宫位 | 见铁律 1 |
 | 6 | 按钮必须真实有效 | 暂停 / 继续 / 上一步 / 下一步 / 跳过 / 重新演算，一个都不能是摆设 |
-| 7 | 文字取数要公开归一化公式 | `((n − 1) mod 12) + 1`，且在页面「规则说明」中展示 |
+| 7 | 文字取数要公开规则 | v1.1.0 起为**笔画起课**：1～3 字，笔画按 `((n − 1) mod 9) + 1` 归约到 1～9（单字档末位时辰 1～12 不归约），规则在「规则说明」中展示 |
 | 8 | 公历农历必须真实换算 | 用 `lunar-javascript`，不许硬编码偏移、不许猜 |
 | 9 | 释义数据独立于 JSX | 释义文案不得写在组件里 |
 | 10 | 支持 `prefers-reduced-motion` | 减少动效下仍能走完全流程 |
@@ -68,7 +74,7 @@
 ```
 ① 九宫算法 + 单元测试
       ↓  （算法是唯一的真理来源，先把它钉死）
-② 日期转换 + 文字取数
+② 日期转换 + 文字取数（笔画表）
       ↓  （把用户输入变成算法需要的三个数字）
 ③ SVG 掌位图 + 真实掐指动画
       ↓  （让算法路径可视化，动画只能消费①的输出）
@@ -94,7 +100,7 @@
 用户输入
   │
   ├─ 生辰：BirthForm ──► lunarConverter.solarToLunar/lunarToSolar ──► {月, 日, 时辰数字}
-  └─ 文字：TextForm  ──► textNumbering.textToNumbers ───────────────► {A, B, C}
+  └─ 文字：TextForm  ──► strokeNumbering.analyzeText ──────────────► {笔画, 笔画, 笔画|时辰}
                               │
                               ▼
                     createDivinationResult()       ★ 纯函数，唯一算法入口
@@ -144,7 +150,9 @@
 | `features/birth/calendarRange.ts` | `SUPPORTED_SOLAR_MIN/MAX` / `SUPPORTED_LUNAR_YEAR_MIN/MAX` / `daysInSolarMonth` / `isValidSolarDate` / `isWithinSupportedSolarRange` / `solarYearOptions` / `lunarYearOptions` | **故意不依赖历法库**，让首页无需加载 301KB 的大包 |
 | `features/birth/lunarConverter.ts` | `solarToLunar` / `lunarToSolar` / `getLeapMonth` / `hasLeapMonth` / `leapMonthOptions` / `lunarMonthDayCount` / `isValidLunarDate` / `lunarMonthText` / `lunarDayText` / `formatLunarDisplay` / `LunarConversionError` / `DEFAULT_SOLAR` / `DEFAULT_LUNAR` | 真实换算；错误码 `OUT_OF_RANGE` / `INVALID_SOLAR_DATE` / `INVALID_LUNAR_DATE` / `NO_SUCH_LEAP_MONTH` / `LIBRARY_ERROR` |
 | `features/birth/timeMapping.ts` | `SHICHEN`(12) / `shichenByNumber` / `shichenNumberFromHour` / `shichenNumberFromDate` / `describeShichen` / `shichenOptionLabel` | 时辰数字 1-12 |
-| `features/text/textNumbering.ts` | `textToNumbers` / `extractHanCharacters` / `isHanCodePoint` / `normalizeToRange` / `normalizeNFC` / `countHanCharacters` / `validateTextInput` / `TEXT_NUMBER_RANGE`(12) / `TEXT_MIN_RECOMMENDED`(3) / `TEXT_MAX_RECOMMENDED`(30) / `TEXT_HARD_MAX`(200) | Unicode 码点遍历取汉字；`normalize(n) = ((n-1) mod 12)+1` |
+| `features/text/strokeNumbering.ts` | `analyzeText` / `STROKE_CHAR_COUNT`(3) / `normalizeStroke` / `STROKE_SOURCE_LABELS` / `formatNumbers` / `currentShichenNumber` / `StrokeNumberingDetail` | **当前文字起数入口**：1～3 字 → 笔画 → 三数；超过 3 字返回 `ok:false` 且**不截断**；笔画按 `((n−1) mod 9)+1` 归约；单字档末位为时辰 1～12（不归约） |
+| `features/text/strokeTable.ts` | `getStroke` / `STROKE_TABLE_SIZE`(6732) / `STROKE_TABLE_RANGE` | 内置笔画表（生成物，**勿手改**）：GB2312 一二级 6768 字命中 6732 字，笔画 1～30；未收录字直接拒绝 |
+| `features/text/textNumbering.ts` | `extractHanCharacters` / `isHanCodePoint` / `normalizeNFC` / `countHanCharacters` / `validateTextInput` / `TEXT_HARD_MAX`(200) / `textToNumbers`（**已退役**） | 汉字提取与字数校验工具仍被复用；`textToNumbers` 的码点取数法自 v1.1.0 起不再被表单调用 |
 
 ### 4.3 解读、分享、存储、音效
 
@@ -252,7 +260,7 @@ RESTART ──► READY（仍用同一个冻结的结果）
 | 4 | 动画节奏 | `divination/buildPath.ts` |
 | 5 | 时辰数字映射 | `birth/timeMapping.ts` |
 | 6 | 历法支持范围 | `birth/calendarRange.ts` |
-| 7 | 文字取数范围与长度 | `text/textNumbering.ts` |
+| 7 | 文字起课字数上限与笔画口径 | `text/strokeNumbering.ts` `STROKE_CHAR_COUNT`(3) / `text/strokeTable.ts`（换口径须重跑 `scripts/gen-stroke-table.mjs`） |
 | 8 | 九宫释义文案 | `interpretation/palaceMeanings.ts` |
 | 9 | 组合解读规则 | `interpretation/composeResult.ts` |
 | 10 | 音效参数 | `audio/soundEngine.ts` |
@@ -359,15 +367,15 @@ RESTART ──► READY（仍用同一个冻结的结果）
 
 #### C1. vitest 随机丢测试文件，退出码却是 0 🔴
 
-- **现象**：`npm test` **每次跑出来的文件数都不一样**（141 → 105 → 98），但**已跑的都绿、exit code 仍未 0**。
+- **现象**：`npm test` **每次跑出来的文件数都不一样**（163 → 105 → 98），但**已跑的都绿、exit code 仍未 0**。
 - **根因**：本机沙箱的文件系统代理垫片（`node-brokered-fs-shim.cjs`）改写了 `os.tmpdir()`。Vitest 会把转译后的模块写入 `join(tmpdir(), 'vitest-xxx')/<hash>`，这个写入被 **EPERM** 拒绝 → 承载该文件的 **worker 线程静默退出** → 那个文件根本没被收集。
 - **为什么危险**：**看起来像"测试全过"**。如果 CI 只看 exit code，会放过这个假阳性。
 - **解法**：关闭文件级并行 → 不再写那个临时目录：
   ```bash
   npm run test:serial        # = vitest run --no-file-parallelism
   ```
-- **验证**：`npm run test:serial` 恒定 **8 文件 / 141 项 / 0 error / exit 0**。
-- **纪律**：**每次报告"测试全绿"前，先核对文件数与用例数**。正常基线就是 **8 / 141**，数字偏小 = 中招。
+- **验证**：`npm run test:serial` 恒定 **9 文件 / 163 项 / 0 error / exit 0**。
+- **纪律**：**每次报告"测试全绿"前，先核对文件数与用例数**。正常基线就是 **9 / 163**（v1.1.0 起；v1.0.0 时为 8 / 141），数字偏小 = 中招。
 
 #### C2. Windows 上 `TMPDIR` 无效
 
@@ -468,46 +476,49 @@ RESTART ──► READY（仍用同一个冻结的结果）
 
 ## 8. 测试体系与验收基线
 
-### 8.1 单元测试（Vitest，8 文件 / 141 项）
+### 8.1 单元测试（Vitest，9 文件 / 163 项）
 
 | 文件 | 项数 | 覆盖 |
 | --- | --- | --- |
 | `calculate.test.ts` | 36 | 算法 + 🔴 强制验收案例专项 |
 | `lunarConverter.test.ts` | 24 | 双向换算、闰月、大小月、跨年、非法/越界 |
-| `textNumbering.test.ts` | 24 | 取数、标点空格、代理对、归一化、校验 |
+| `textNumbering.test.ts` | 24 | 汉字提取、标点空格、代理对、字数校验 |
+| `strokeNumbering.test.ts` | 22 | **文字起课**：1～3 字分档、超三字拒绝不截断、笔画查表、生僻字拒绝、归约边界、单字档时辰 |
 | `machine.test.ts` | 19 | 状态机全部动作与边界；**结果对象全程不被替换** |
 | `interpretation.test.ts` | 16 | 释义字段完整、组合规则、建议 2–4 条、免责常驻 |
 | `historyStorage.test.ts` | 10 | 本地存储读写、上限、文字模式不存原文 |
 | `timeMapping.test.ts` | 7 | 十二时辰映射与反向判定 |
 | `app.flow.test.tsx` | 5 | jsdom 应用级完整流程（**无浏览器内核也能跑**） |
-| **合计** | **141** | — |
+| **合计** | **163** | — |
 
 ### 8.2 端到端（Playwright，2 项目 × 17 = 34 项，**可选**）
 
 - 桌面 `chromium-desktop` 1280×900 + 移动 `chromium-mobile` Pixel 5。
-- 关键项：强制验收案例（跳过路径 / 逐步动画路径 / 五种按钮 / 复制与再次占测）、文字起卦、标点不影响起数、闰月可选性、超范围年份、减少动效、窄屏无横向滚动、结果可复现、历史入口。
+- 关键项：强制验收案例（跳过路径 / 逐步动画路径 / 五种按钮 / 复制与再次占测）、文字起课（1～3 字、超三字拒绝、单字补时辰）、标点不影响起数、闰月可选性、超范围年份、减少动效、窄屏无横向滚动、结果可复现、历史入口。
 - **定位**：保留作回归资产，但**不属于交付门禁**——它要拉起浏览器内核 + 预览服务，每次改动都跑成本过高。
   日常交付以 8.4 的前四条命令为准。UI 改版后若 E2E 断言过期，允许暂缓修正，但**必须在本文档记一笔**。
 
-### 8.3 构建产物基线（2026-10-19 实测，以 vite 输出为准）
+### 8.3 构建产物基线（2026-10-20 实测，以 vite 输出为准）
 
 | 构建 | 产物 | 大小 |
 | --- | --- | --- |
 | `npm run build` | `index.html` | 0.77 KB (gzip 0.65) |
 | | `index-*.css` | 38.25 KB (gzip 8.39) |
-| | `index-*.js`（首屏） | **215.68 KB (gzip 77.78)** |
+| | `index-*.js`（首屏） | **225.66 KB (gzip 96.12)** |
 | | `BirthForm-*.js`（懒加载历法包） | 301.28 KB (gzip 104.53) |
-| `npm run build:offline` | `app.js` | 515.68 KB (gzip 182.27) |
+| `npm run build:offline` | `app.js` | 525.66 KB (gzip 200.39) |
 | | `app.css` | 39.38 KB (gzip 8.56) |
-| `npm run build:single` | `掌中诀-单文件版.html` | 572.7 KB（全内联，单文件可分发） |
+| `npm run build:single` | `掌中诀-单文件版.html` | 596.7 KB（全内联，单文件可分发） |
 
-> 掌图重绘后首屏 JS 比上一版 **+4.7 KB**（贝塞尔剪影路径 3844 字符 + 渐隐 mask），属可接受范围。
+> v1.1.0 首屏 JS 比 v1.0.0 记录值增大（+9.98 KB，gzip +18.34 KB），主要来自**内置笔画表**
+> （`strokeTable.ts` 源文件 22 KB，多为离散数字与汉字串、gzip 压缩率低），另有规则文案与表单改动带来的少量增量。
+> 若日后要压体积，可考虑把笔画表改为按需加载。
 
 ### 8.4 每次交付前必须跑的命令
 
 ```bash
 npm run typecheck      # 必须零错误
-npm run test:serial    # 必须 8 文件 / 141 项 / 0 error
+npm run test:serial    # 必须 9 文件 / 163 项 / 0 error
 npm run build          # 必须成功
 ```
 
@@ -543,7 +554,7 @@ npm run build          # 必须成功
 | 改掌位图外观 | `palmLayout.ts` 坐标 + `PalmDiagram.css` | 解耦测试；E2E 的"九个指节"断言 |
 | 换时辰口径（如早晚子时） | `birth/timeMapping.ts` | `timeMapping.test.ts`；README 配置表；**且这属于传统规则的流派差异，需先向上确认** |
 | 调整历法支持范围 | `birth/calendarRange.ts` | 越界报错的单测；E2E 的年份选项断言（201 项） |
-| 改文字取数范围 | `text/textNumbering.ts` 的 `TEXT_NUMBER_RANGE` | 归一化公式在页面「规则说明」中同步；单测 |
+| 改文字起课口径 | `text/strokeNumbering.ts` 的 `STROKE_CHAR_COUNT` / `strokeTable.ts`（重新生成） | 规则在页面「规则说明」同步；改后必须重跑 163 项单测 |
 | 加一种新的起卦方式 | 新建 `features/<name>/`，产出三个数字后调 `createDivinationResult()` | **不要绕过 `calculate.ts`**；新增视图分支到 `App.tsx` 的 `View` |
 | 改隐私策略 | `historyStorage.ts` / `shareCard.ts` / 结果页声明 | README 第 9 节；`PRIVACY_NOTICE` |
 
@@ -584,7 +595,7 @@ npm run build          # 必须成功
 - [ ] 读了 `README.md`（面向使用者）与本文档（面向开发者）
 - [ ] 通读了上级目录的需求文档 `.docx`（486 段），尤其第 1.1 节的 13 条硬约束
 - [ ] `npm install` 成功；`npm run dev` 能打开首页
-- [ ] `npm run test:serial` → **确认是 8 文件 / 141 项**（若数字偏小，见 C1）
+- [ ] `npm run test:serial` → **确认是 9 文件 / 163 项**（若数字偏小，见 C1）
 - [ ] `npm run build` → 产物大小与第 8.3 节基线一致
 - [ ] 手动走一遍强制验收案例：农历五月二十日 + 丑时 → **小吉 / 空亡 / 病符**
 - [ ] 确认已理解铁律 1（动画不推算宫位）与铁律 2（结果冻结）
@@ -620,6 +631,7 @@ npm run build          # 必须成功
 | ⑦ 自足性审计 | 实测 6 个请求零外链；新增 `build:offline` | 发现 `file://` 陷阱 → 用 IIFE + 剥离模块标记 + `defer` 做出可双击版本 |
 | ⑧ 体验定稿 | 删冗余展示（九宫列表 / 路径剧透 / 步骤卡 / 起数预览页）、移动端全流程一屏、导航收纳、透明操作条、版权页脚 | 页面从 6 个视图收敛到 5 个；**预览页整页删除，提交即入演算**；所有"一屏"靠高度方程而非缩小掌图 |
 | ⑨ 入库 | `LICENSE`（非商业）、`.gitignore`、`scripts/build-single-file.mjs`；死代码与死样式清理 | 仓库只收源码；单文件打包从一次性临时脚本升级为正式 npm script |
+| ⑩ v1.1.0 文字起课（2026-10-20） | `strokeNumbering.ts` / `strokeTable.ts` / `gen-stroke-table.mjs` + 22 项新单测；表单与规则页文案重写；掌图视觉定稿；版本号 1.0.0 → 1.1.0 | **取字由程序截取改为用户自定 1～3 字**（取字即取象），超限拒绝不截断；笔画口径取**简体规范笔顺**（既所思即所得）；九宫算法一字未改，历史记录可跨版本对读 |
 | ⑩ 掌图重绘（第一阶段） | `palmLayout.ts` 全量重写：`HAND_PATH`（3844 字符贝塞尔剪影，矢量化自圣上参考图）+ 实测手指几何 + 牌位卡宫格；`PalmDiagram` 拆三独立分组；掌体压暗 + 底部渐隐 mask；**删掌纹 / 指尖金饰 / 腕部太极印** | 手形放弃参数化曲线与开源图标（Phosphor `hand` 为并指举手形，不符），改**直接矢量化参考图**；掌纹涉相学定论，宁留白不臆造；九宫坐标与算法零接触 |
 
 **一句话总结这次开发的核心经验**：
