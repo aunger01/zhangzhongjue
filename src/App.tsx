@@ -33,7 +33,8 @@ import {
   removeHistory,
   type HistoryEntry,
 } from './features/history/historyStorage';
-import type { CalendarInfo, DivinationMode, TextNumberingDetail } from './features/divination/types';
+import type { CalendarInfo, DivinationMode } from './features/divination/types';
+import type { StrokeNumberingDetail } from './features/text/strokeNumbering';
 import './App.css';
 
 type View = 'home' | 'birth' | 'text' | 'session' | 'result';
@@ -51,7 +52,7 @@ interface PendingInput {
   day: number;
   hour: number;
   calendar?: CalendarInfo;
-  detail?: TextNumberingDetail;
+  detail?: StrokeNumberingDetail;
 }
 
 export default function App() {
@@ -168,9 +169,11 @@ export default function App() {
       ),
       numbersText,
       methodNote:
-        pending.mode === 'text'
-          ? `文字心念取数法：A=${pending.detail?.count ?? 0}，B=${pending.detail?.codePointSum ?? 0}，C=${
-              pending.detail?.codePointSquareSum ?? 0
+        pending.mode === 'text' && pending.detail
+          ? `传统笔画取数：${pending.detail.chars
+              .map((item) => `${item.char} ${item.stroke} 画`)
+              .join('、')}${pending.detail.padded ? '（从大安起日）' : ''}${
+              pending.detail.hourName ? `，补 ${pending.detail.hourName}` : ''
             }`
           : undefined,
     });
@@ -239,7 +242,13 @@ export default function App() {
             calendar={pending.calendar ?? null}
             textNote={
               pending.mode === 'text' && pending.detail
-                ? `本站自定义文字取数法：A=${pending.detail.count}，B=${pending.detail.codePointSum}，C=${pending.detail.codePointSquareSum}，归一化到 1～${pending.detail.range}`
+                ? `传统汉字起课：${pending.detail.chars
+                    .map((item) => `${item.char} ${item.stroke} 画`)
+                    .join('、')}${pending.detail.padded ? '，从大安起日' : ''}${
+                    pending.detail.hourName ? `，补 ${pending.detail.hourName}` : ''
+                  }；笔画归约到 1～9 后起宫${
+                    pending.detail.hourName ? '，末位时辰按 1～12 原样入数' : ''
+                  }`
                 : null
             }
             onReplay={() => {
@@ -312,7 +321,8 @@ function buildInputSummary(
   }
   if (pending.mode === 'text') {
     const count = pending.detail?.count ?? 0;
-    return `心念文字（有效汉字 ${count} 字）`;
+    const hourSuffix = pending.detail?.hourName ? `·${pending.detail.hourName}` : '';
+    return `心念文字（有效汉字 ${count} 字${hourSuffix}）`;
   }
   return `起数 ${month}、${day}、${hour}`;
 }

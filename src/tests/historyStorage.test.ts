@@ -21,6 +21,7 @@ function makeEntry(index: number): HistoryEntry {
     numbersText: '5、20、2',
     palaces: ['小吉', '空亡', '病符'],
     algorithmId: 'jiugong-xiaoliuren',
+    // 故意写旧版号：历史记录不按版本号过滤，旧条目须照常读回（勿随手改成当前版本）
     algorithmVersion: '1.0.0',
   };
 }

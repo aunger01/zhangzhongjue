@@ -1,7 +1,7 @@
 {
   "name": "palm-oracle",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "掌中诀 · 道门秘术九宫小六壬掌诀互动网站（纯前端）",
   "type": "module",
   "scripts": {

@@ -205,7 +205,14 @@ export function getPalaceMeta(index: number): PalaceMeta {
 /** 九宫循环顺序文本，用于规则说明 */
 export const PALACE_CYCLE_TEXT = `${PALACES.join(' → ')} → 大安……`;
 
-/** 算法标识与版本：演算开始后固定，写入结果对象 */
+/**
+ * 算法标识与版本：演算开始后固定，写入结果对象
+ *
+ * 版本沿革（九宫顺序、起宫规则、落宫公式全程未变，仅取数入口扩展）：
+ * - 1.0.0：生辰起卦（公历/农历→三数）、心念数字起卦
+ * - 1.1.0：新增文字（汉字笔画）起数——1~3 字取笔画，超过三字由用户自行删减；
+ *          落宫仍走同一套 `(start + count − 1) mod 9`，故历史记录可跨版本对读
+ */
 export const ALGORITHM_ID = 'jiugong-xiaoliuren';
-export const ALGORITHM_VERSION = '1.0.0';
+export const ALGORITHM_VERSION = '1.1.0';
 export const ALGORITHM_NAME = '九宫小六壬 · 连续起宫法';

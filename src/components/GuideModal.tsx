@@ -4,7 +4,7 @@
  * 规则说明是本项目的"透明度声明"：
  *   - 九宫定义与掌位对照全部公开；
  *   - 连续起宫规则与数学公式全部公开；
- *   - 文字取数法明确标注为"本站自定义扩展玩法"，不冒充古法；
+ *   - 文字取数法公开到「第几个字、几画、怎么归约」，不冒充古法；
  *   - 公历/农历换算说明可靠支持范围；
  *   - 隐私与娱乐用途提示。
  */
@@ -24,12 +24,8 @@ import {
   SUPPORTED_SOLAR_MAX,
   SUPPORTED_SOLAR_MIN,
 } from '../features/birth/calendarRange';
-import {
-  TEXT_HARD_MAX,
-  TEXT_MAX_RECOMMENDED,
-  TEXT_MIN_RECOMMENDED,
-  TEXT_NUMBER_RANGE,
-} from '../features/text/textNumbering';
+import { TEXT_HARD_MAX } from '../features/text/textNumbering';
+import { STROKE_CHAR_COUNT } from '../features/text/strokeNumbering';
 import { INTERPRETATION_DISCLAIMER, PRIVACY_NOTICE } from '../features/interpretation/palaceMeanings';
 import { Modal } from './Modal';
 import './GuideModal.css';
@@ -52,8 +48,7 @@ export function GuideModal({ open, variant, onClose }: GuideModalProps) {
                 <strong>生辰起卦</strong>：输入公历或农历出生日期与时辰，选择该年确有闰月的月份可在闰月测试。系统会先把公历真实换算为农历，再取农历月、农历日、时辰数字作为三数。
               </li>
               <li>
-                <strong>心念起卦</strong>：写下此刻最想知道的事（推荐 {TEXT_MIN_RECOMMENDED}～
-                {TEXT_MAX_RECOMMENDED} 个汉字），系统按公开的文字取数法把文字换算成三个数字。原文只在当前页面内存中使用。
+                <strong>心念起卦</strong>：自己写下一到三个汉字（写哪几个字由你定，取字即取象），系统按公开的文字取数法把文字换算成三个数字。原文只在当前页面内存中使用。
               </li>
             </ul>
           </section>
@@ -186,25 +181,38 @@ resultIndex = (startIndex + count - 1) % 9`}</pre>
           </section>
 
           <section>
-            <h3>六、文字心念取数法（本站自定义扩展玩法）</h3>
-            <p className="note-warn">
-              请注意：文字取数法是本站的自定义扩展玩法，<strong>不是</strong>传统九宫小六壬古法。
-              以下规则完全公开，相同的文字必然得到相同的数字。
+            <h3>六、文字取数法（传统汉字起课）</h3>
+            <p>
+              取数依传统汉字起课：<strong>由您自己写下一至三个汉字</strong>，写哪几个字本身即是取象，
+              故程序不替您挑选、也不截取。每个字按其规范笔画起数；不足三字时
+              <strong>从大安起日、日上起时</strong>。完整规则如下，可逐条核对。
             </p>
             <ol>
-              <li>对文本执行 Unicode NFC 规范化。</li>
-              <li>提取有效汉字序列，得到字符数 N（空格、换行、标点、数字、字母、表情符号均不计入）。</li>
               <li>
-                A = N；B = 所有有效汉字 Unicode 码点值之和；C = 所有有效汉字 Unicode 码点值平方之和。
+                对文本执行 Unicode NFC 规范化，提取有效汉字（空格、换行、标点、数字、字母、表情符号均不计入）。
+              </li>
+              <li>有效汉字须为 1～{STROKE_CHAR_COUNT} 个；超过三个请自行删减，程序不会自动截取。</li>
+              <li>
+                每个笔画数归约为 1～9：((笔画 − 1) mod 9) + 1。归约只压缩数位，不改变落宫。
               </li>
               <li>
-                取数范围 1～{TEXT_NUMBER_RANGE}：normalize(n) = ((n − 1) mod {TEXT_NUMBER_RANGE}) + 1。
+                三个字：三数即三字笔画；两个字：[1, 第 1 字笔画, 第 2 字笔画]；一个字：[1,
+                该字笔画, 时辰数字]。
               </li>
-              <li>最终起数为 normalize(A)、normalize(B)、normalize(C)，之后完全复用同一个九宫连续起宫算法。</li>
+              <li>
+                单字档的时辰数字取 1～12（子时为 1），<strong>不经 1～9 归约</strong>
+                ，原样入数；因起宫公式本身取模，落宫结果不受影响。
+              </li>
+              <li>所得三数完全复用同一套九宫连续起宫算法。</li>
             </ol>
+            <p className="note-warn">
+              请注意：<strong>取数方式</strong>依传统汉字起课，但<strong>九宫落宫体系</strong>
+              （在传统六神之外增设病符、桃花、天德）是本网站的整理方式，不敢自称某部古籍原貌。
+              笔画以简体规范笔顺为准；生僻字与部首暂不支持，会明确提示而不会猜测。
+            </p>
             <p className="faint">
-              输入上限 {TEXT_HARD_MAX} 个汉字；有效汉字 {TEXT_MIN_RECOMMENDED}～
-              {TEXT_MAX_RECOMMENDED} 字为宜，不足或超出仅作提示，不强制。
+              请写 1～{STROKE_CHAR_COUNT} 个汉字；输入框可容纳至 {TEXT_HARD_MAX}{' '}
+              个字符，是便于您先写下、再自行删减，程序不会替您截取。相同文字必然得到相同的三个数。
             </p>
           </section>
 

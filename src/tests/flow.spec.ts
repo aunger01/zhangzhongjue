@@ -64,8 +64,8 @@ test.describe('首页', () => {
     await expect(modal).toBeVisible();
     await expect(modal).toContainText('九宫定义');
     await expect(modal).toContainText('(startIndex + count - 1) % 9');
-    await expect(modal).toContainText('文字心念取数法');
-    await expect(modal).toContainText('不是');
+    await expect(modal).toContainText('文字取数法（传统汉字起课）');
+    await expect(modal).toContainText('不敢自称某部古籍原貌');
     await modal.getByRole('button', { name: '关闭', exact: true }).click();
     await expect(modal).toBeHidden();
   });
@@ -77,12 +77,7 @@ test.describe('🔴 强制验收案例：农历五月二十日、丑时，起数
     await fillAcceptanceInput(page);
 
     // 预览页显示起数与三数
-    await expect(page.getByTestId('preview-summary')).toContainText('农历五月二十日，丑时；起数 5、20、2');
-    await expect(page.getByTestId('preview-numbers')).toContainText('5');
-    await expect(page.getByTestId('preview-numbers')).toContainText('20');
-    await expect(page.getByTestId('preview-numbers')).toContainText('2');
 
-    await page.getByTestId('preview-start').click();
 
     // 演算界面就绪
     await expect(page.getByTestId('session-status')).toBeVisible();
@@ -94,19 +89,29 @@ test.describe('🔴 强制验收案例：农历五月二十日、丑时，起数
     await expect(page.getByTestId('result-card-hour')).toHaveAttribute('data-palace', '病符');
     await expect(page.getByTestId('result-headline')).toContainText('病符');
 
-    // 计算过程可展开并包含完整路径长度
-    await page.getByText('查看计算过程（三步完整计数路径）').click();
-    const process = page.locator('.result__process-body');
-    await expect(process).toContainText('(0 + 5 − 1) mod 9 = 4');
-    await expect(process).toContainText('(4 + 20 − 1) mod 9 = 5');
-    await expect(process).toContainText('(5 + 2 − 1) mod 9 = 6');
+    // 每张宫卡都可展开「完整计数路径」：位数 === 该步起数，末位 === 落宫
+    const steps = [
+      { step: 'month', count: 5, palace: '小吉' },
+      { step: 'day', count: 20, palace: '空亡' },
+      { step: 'hour', count: 2, palace: '病符' },
+    ] as const;
+    for (const { step, count, palace } of steps) {
+      const card = page.getByTestId(`result-card-${step}`);
+      await card.getByRole('button', { name: '查看完整计数路径' }).click();
+      const path = card.locator('.result-card__path');
+      await expect(path.locator('li')).toHaveCount(count);
+      await expect(path.locator('li').first()).not.toHaveClass(/is-landed/);
+      await expect(path.locator('li').last()).toHaveClass(/is-landed/);
+      await expect(path.locator('li').last()).toContainText(palace);
+      await card.getByRole('button', { name: '收起计数路径' }).click();
+      await expect(path).toBeHidden();
+    }
 
     expect(errors).toEqual([]);
   });
 
   test('逐步完成动画后同样得到三步结果，且落点与算法路径一致', async ({ page }) => {
     await fillAcceptanceInput(page);
-    await page.getByTestId('preview-start').click();
 
     // 切换为手动逐步（默认自动继续），并把速度调到 2× 减少等待
     await page.getByTestId('btn-mode-toggle').click();
@@ -131,7 +136,6 @@ test.describe('🔴 强制验收案例：农历五月二十日、丑时，起数
 
   test('暂停 / 继续 / 上一步 / 重新演算 均可用，且不改变结果', async ({ page }) => {
     await fillAcceptanceInput(page);
-    await page.getByTestId('preview-start').click();
 
     // 切换为手动逐步，保证断言时序确定
     await page.getByTestId('btn-mode-toggle').click();
@@ -175,7 +179,6 @@ test.describe('🔴 强制验收案例：农历五月二十日、丑时，起数
   test('结果页可复制文字、可再次占测', async ({ page, context }) => {
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
     await fillAcceptanceInput(page);
-    await page.getByTestId('preview-start').click();
     await page.getByTestId('btn-skip').click();
 
     await page.getByTestId('btn-copy').click();
@@ -195,19 +198,17 @@ test.describe('文字心念起卦', () => {
     // 空白不可提交
     await expect(page.getByTestId('text-submit')).toBeDisabled();
 
-    await page.getByTestId('text-input').fill('此事可否从速落定');
-    await expect(page.getByTestId('text-count')).toContainText('8 字');
+    await page.getByTestId('text-input').fill('此事可');
+    await expect(page.getByTestId('text-count')).toContainText('3 字');
 
     // 展开取数明细，规则与数字一致
     await page.getByRole('button', { name: '展开取数明细' }).click();
-    await expect(page.locator('.text-form__detail')).toContainText('归一化公式');
+    await expect(page.locator('.text-form__detail')).toContainText('归约公式');
 
     const numbersText = await page.getByTestId('text-numbers').locator('strong').textContent();
     expect(numbersText).toMatch(/^\d+、\d+、\d+$/);
 
     await page.getByTestId('text-submit').click();
-    await expect(page.getByTestId('preview-summary')).toContainText('心念文字');
-    await page.getByTestId('preview-start').click();
     await page.getByTestId('btn-skip').click();
 
     await expect(page.getByTestId('result-card-month')).toBeVisible();
@@ -221,10 +222,10 @@ test.describe('文字心念起卦', () => {
   test('标点与空格不影响起数（规范化后一致）', async ({ page }) => {
     await page.goto('/');
     await page.getByTestId('entry-text').click();
-    await page.getByTestId('text-input').fill('求问前程');
+    await page.getByTestId('text-input').fill('问前程');
     const plain = await page.getByTestId('text-numbers').locator('strong').textContent();
 
-    await page.getByTestId('text-input').fill(' 求 问，前程！ ');
+    await page.getByTestId('text-input').fill(' 问 前，程！ ');
     const punctuated = await page.getByTestId('text-numbers').locator('strong').textContent();
     expect(punctuated).toBe(plain);
   });
@@ -292,7 +293,6 @@ test.describe('减少动效模式', () => {
 
   test('系统偏好减少动态效果时仍可完成完整流程', async ({ page }) => {
     await fillAcceptanceInput(page);
-    await page.getByTestId('preview-start').click();
     await expect(page.getByTestId('step-landed')).toContainText('小吉', { timeout: 20_000 });
     await page.getByTestId('btn-skip').click();
     await expect(page.getByTestId('result-card-hour')).toHaveAttribute('data-palace', '病符');
@@ -322,7 +322,6 @@ test.describe('移动端布局', () => {
   test('演算界面在窄屏下掌位图与控件均可见', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await fillAcceptanceInput(page);
-    await page.getByTestId('preview-start').click();
     await expect(page.locator('.palm-svg')).toBeVisible();
     await expect(page.getByTestId('btn-skip')).toBeVisible();
 
@@ -339,13 +338,11 @@ test.describe('移动端布局', () => {
 test.describe('结果可复现性', () => {
   test('相同输入两次占测结果完全一致', async ({ page }) => {
     await fillAcceptanceInput(page);
-    await page.getByTestId('preview-start').click();
     await page.getByTestId('btn-skip').click();
     const headline1 = await page.getByTestId('result-headline').textContent();
 
     await page.getByTestId('btn-new').click();
     await fillAcceptanceInput(page);
-    await page.getByTestId('preview-start').click();
     await page.getByTestId('btn-skip').click();
     const headline2 = await page.getByTestId('result-headline').textContent();
     expect(headline2).toBe(headline1);

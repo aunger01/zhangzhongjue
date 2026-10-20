@@ -6,6 +6,11 @@
 
 **纯前端**：所有计算、历法换算、动画与解读都在浏览器本地完成，不依赖后端、数据库、账号登录或付费 AI 服务。
 
+**当前版本 v1.1.0**（2026-10-20）：在 v1.0.0 的生辰起卦、心念数字起卦之上，新增**文字起课**——
+用户自己写下 1～3 个汉字（取哪几个字由用户定，超过三个字一律拒绝、不替用户截断），按汉字笔画起数；
+九宫顺序、起宫规则与落宫公式**自始未变**，历史记录可跨版本对读。算法版本号见
+`features/divination/palaceConstants.ts` 的 `ALGORITHM_VERSION`，与 `package.json` 同步。
+
 **许可**：源码公开，可自由阅读、学习与非商业使用，但**不得商用**；© 2026 Aunger Page，保留所有权利。详见 [`LICENSE`](./LICENSE)。
 
 > 🧭 **要接着开发或改这个项目？** 请先读 [`开发过程与AI交接手册.md`](./开发过程与AI交接手册.md)：
@@ -25,7 +30,7 @@ npm install
 # 本地开发（默认 http://localhost:5173）
 npm run dev
 
-# 单元测试（算法 / 历法 / 文字取数 / 状态机 / 解读 / 本地存储）
+# 单元测试（算法 / 历法 / 文字起课 / 状态机 / 解读 / 本地存储）
 npm test
 
 # 单元测试（受限沙箱环境专用：关闭文件级并行，见第 11 节 FAQ）
@@ -105,11 +110,13 @@ npm run test:e2e
 | SVG | 手掌、指节宫位、掐指指示器 |
 | CSS 动画 | 淡入、流光、落宫光圈、卡片依次出现 |
 | [lunar-javascript](https://github.com/6tail/lunar-javascript)（MIT） | 公历 / 农历真实换算 |
-| Vitest | 算法、历法、文字取数单元测试 |
+| 内置笔画表（`strokeTable.ts`） | 汉字笔画查询，随主包分发，**不请求任何在线字典** |
+| Vitest | 算法、历法、文字起课单元测试 |
 | Playwright | 关键用户流程端到端测试 |
 
-> 构建产物已做按需拆分（2026-10 实测）：首页与心念起卦只加载主包 **211 KB（gzip ≈ 76 KB）**，
-> 历法库（约 301 KB / gzip ≈ 105 KB）在进入「生辰起卦」时才加载。
+> 构建产物已做按需拆分（2026-10-20 实测）：首页与心念起卦只加载主包 **225.66 KB（gzip ≈ 96.12 KB）**，
+> 历法库（约 301 KB / gzip ≈ 104.53 KB）在进入「生辰起卦」时才加载。
+> 主包内含内置笔画表 `strokeTable.ts`（源文件 22 KB），用于文字起课，不额外发起请求。
 
 ---
 
@@ -175,13 +182,28 @@ interface PalaceStep {
 ### 4.5 文字心念取数法（本站自定义扩展玩法）
 
 > ⚠️ 这不是传统九宫小六壬古法，是本站的自定义扩展玩法，规则完全公开（首页「规则说明」中同步展示）。
-> 相同文本必然得到相同数字。
+> 相同文字必然得到相同数字；**笔画口径固定为简体规范笔顺**（既所思即所得），不提供繁体/康熙口径切换。
 
-1. 对文本执行 Unicode **NFC** 规范化。
-2. 提取有效汉字序列，得到字符数 N（空格、换行、标点、数字、字母、表情符号均不计入；按 Unicode 码点遍历，不会拆错代理对）。
-3. `A = N`；`B = 所有有效汉字 Unicode 码点值之和`；`C = 所有有效汉字 Unicode 码点值平方之和`。
-4. 取数范围 1～12：`normalize(n) = ((n − 1) mod 12) + 1`。
-5. 最终起数为 `normalize(A)、normalize(B)、normalize(C)`，之后**完全复用**同一个九宫连续起宫算法。
+1. 对输入执行 Unicode **NFC** 规范化，再提取有效汉字序列（空格、换行、标点、数字、字母、表情符号均不计入；
+   按 Unicode 码点遍历，不会拆错代理对）。
+2. **字数上限 3**：有效汉字超过 3 个即拒绝提交，明确提示用户自行删减——**程序不替用户截取**
+   （取哪几个字本身就是取象的一步，属用户决定）。
+3. 按字数分档取三数（见下表）。
+
+| 有效字数 | 起数（月、日、时） | 补充 |
+| --- | --- | --- |
+| 3 字 | 第 1、2、3 字的笔画数 | — |
+| 2 字 | `1`、第 1 字笔画、第 2 字笔画 | 程序补 `1` 作月数 |
+| 1 字 | `1`、该字笔画、**时辰数字** | 时辰由用户选择（预填当前时辰，可改） |
+
+4. 笔画取自内置笔画表 `strokeTable.ts`（GB2312 一二级字库 6768 字中命中 6732 字，笔画 1～30；
+   由 `scripts/gen-stroke-table.mjs` 生成）。**字表未收录的字直接拒绝**并提示，不猜测、不按编码估算。
+5. 笔画数大于 9 时按 `((n − 1) mod 9) + 1` 归约到 1～9；**单字档末位的时辰数字取 1～12（子时为 1），不归约、原样入数**
+   （起宫公式自带取模，落宫结果不受影响）。
+6. 所得三数**完全复用**同一个九宫连续起宫算法。
+
+> 说明：早期版本（v1.0.0）曾用「字符数 + Unicode 码点求和」取数，自文字起课上线后**已退役**，
+> `textNumbering.ts` 中的 `textToNumbers()` 不再被表单调用；其汉字提取与字数校验工具函数仍被复用。
 
 ### 4.6 历法换算
 
@@ -201,7 +223,8 @@ palm-oracle/
 ├── vite.offline.config.ts    # 离线构建配置（历法包内联 + 经典脚本，供 file:// 双击）
 ├── playwright.config.ts      # 端到端测试配置（桌面 + 移动端两个项目）
 ├── scripts/
-│   └── build-single-file.mjs # 把 dist-offline/ 内联成单个 .html
+│   ├── build-single-file.mjs # 把 dist-offline/ 内联成单个 .html
+│   └── gen-stroke-table.mjs  # 生成汉字笔画表（构建期离线工具，不参与运行时）
 ├── tsconfig*.json
 ├── public/
 │   └── favicon.svg
@@ -229,8 +252,10 @@ palm-oracle/
     │   │   ├── lunarConverter.ts  # 公历 ⇄ 农历换算
     │   │   └── timeMapping.ts     # 十二时辰映射
     │   ├── text/
-    │   │   ├── TextForm.tsx       # 文字心念表单
-    │   │   └── textNumbering.ts   # 文字取数法
+    │   │   ├── TextForm.tsx        # 文字心念表单（1～3 字，超限拒绝；单字补时辰）
+    │   │   ├── strokeNumbering.ts  # 文字起课：汉字 → 笔画 → 三数（当前取数入口）
+    │   │   ├── strokeTable.ts      # 内置笔画表（GB2312 常用字，生成物，勿手改）
+    │   │   └── textNumbering.ts    # 汉字提取 / 字数校验工具（码点取数法已退役）
     │   ├── divination/
     │   │   ├── types.ts               # 类型契约
     │   │   ├── palaceConstants.ts     # 九宫常量与算法版本
@@ -251,7 +276,8 @@ palm-oracle/
     └── tests/
         ├── calculate.test.ts        # 算法 + 强制验收案例
         ├── lunarConverter.test.ts   # 历法与范围
-        ├── textNumbering.test.ts    # 文字取数
+        ├── strokeNumbering.test.ts  # 文字起课（笔画 → 三数）
+        ├── textNumbering.test.ts    # 汉字提取与字数校验
         ├── timeMapping.test.ts      # 时辰映射
         ├── machine.test.ts          # 状态机
         ├── interpretation.test.ts   # 解读生成
@@ -264,25 +290,26 @@ palm-oracle/
 
 ## 6. 测试与验收
 
-单元测试覆盖（`npm test`，共 **8 个测试文件 / 141 项**）：
+单元测试覆盖（`npm test`，共 **9 个测试文件 / 163 项**）：
 
 - **算法**：`5、20、2 → 小吉、空亡、病符`；月份永远从大安起；起宫计作第 1 位；日期/时辰起宫等于上一步落宫；
   天德之后回到大安；`pathIndices` 长度等于计数、首项为起宫、末项为落宫；相同输入结果一致。
 - **解耦**：动画节奏、掌位图坐标改动都不会改变计算结果；摊平后的动画帧与算法路径逐项一致。
 - **历法**：已知参照日期双向换算、1901–2099 抽样往返一致、闰月存在性、大小月、跨年、非法日期、超范围报错。
-- **文字取数**：空白不可提交、标点与空格不计入、代理对不拆分、相同文字数字恒定、明细与最终数字自洽。
+- **文字取数**：空白不可提交；标点、空格、数字、字母、表情不计入；代理对不拆分；
+  超过三字拒绝且不截断；单字档补时辰、两字档补 `1`；笔画查表命中与生僻字拒绝；笔画归约到 1～9 的边界；相同文字数字恒定。
 - **状态机**：暂停/继续/上一步/下一步/跳过/重新演算/回看的行为与边界，结果对象全程不被替换。
 - **解读**：九宫释义字段完整、组合规则命中、建议 2～4 条、免责声明常驻。
 
-端到端测试覆盖（`npm run test:e2e`，桌面与移动端两个项目，共 **34 项**）：
+端到端测试覆盖（`npm run test:e2e`，17 条用例 × 桌面/移动两个项目 = 34 项；**可选，非交付门禁**。
+2026-10-20 实测桌面端 `--project chromium-desktop` **17/17 全绿**）：
 
-端到端测试覆盖（`npm run test:e2e`，桌面与移动端两个项目，共 **34 项**；**可选，非交付门禁**）：
-
-- 首页九宫齐备、玩法与规则说明可打开（含公式与文字取数规则公开）。
+- 首页九宫齐备、玩法与规则说明可打开（含公式与文字起课规则公开）。
 - 生辰起卦完整流程：农历五月二十日 + 丑时 → 演算 → 结果页三张卡片为小吉/空亡/病符。
 - 逐步动画流程：每一步的落宫与计数序号与算法一致，且与跳过动画的结果完全相同。
 - 全部按钮真实有效：暂停、继续、上一步、下一步、跳过动画、重新演算、复制、再次占测。
-- 文字起卦流程、标点不影响起数、闰月勾选逻辑、公历农历切换提示。
+- 文字起课流程：1～3 字起数、超三字拒绝且不截断、单字档补时辰；标点不影响起数；闰月勾选逻辑、公历农历切换提示。
+- 结果页三张宫卡的「查看完整计数路径」可展开/收起，路径位数等于该步起数。
 - 减少动效模式（`prefers-reduced-motion: reduce`）下仍可完成完整流程。
 - 移动端无横向滚动、掌位图与控件可见可点。
 - 结果可复现（同输入两次占测结果一致）。
@@ -299,7 +326,10 @@ palm-oracle/
 | 动画节奏 | `features/divination/buildPath.ts` | 单次移动 `BASE_MOVE_MS`、落宫停留 `LANDING_DWELL_MS`、减速系数、减少动效节奏 |
 | 时辰数字映射 | `features/birth/timeMapping.ts` | 十二时辰对照表；如采用其他流派口径，改这里并同步测试 |
 | 历法支持范围 | `features/birth/calendarRange.ts` | `SUPPORTED_SOLAR_MIN/MAX`、`SUPPORTED_LUNAR_YEAR_MIN/MAX` |
-| 文字取数范围与长度 | `features/text/textNumbering.ts` | `TEXT_NUMBER_RANGE`（默认 12）、推荐/硬性字数上限 |
+| 文字起课字数上限 | `features/text/strokeNumbering.ts` 的 `STROKE_CHAR_COUNT` | 默认 3；超过即拒绝提交，程序不替用户截取（`textNumbering.ts` 的 `TEXT_HARD_MAX`=200 仅作输入框防呆长度） |
+| 文字取数归约 | `features/text/strokeNumbering.ts` 的 `normalizeStroke` | 笔画按 `((n−1) mod 9)+1` 归约到 1～9；单字档的时辰数字不归约 |
+| 汉字笔画表 | `features/text/strokeTable.ts`（由 `scripts/gen-stroke-table.mjs` 生成） | 简体规范笔顺口径；换口径（如繁体/康熙）须重新生成并同步全部测试 |
+| 旧码点取数范围 | `features/text/textNumbering.ts` 的 `TEXT_NUMBER_RANGE` | **已退役**：`textToNumbers()` 不再被表单调用，仅保留汉字提取与校验工具 |
 | 九宫释义文案 | `features/interpretation/palaceMeanings.ts` | `summary / asMonth / asDay / asHour / career / relationship / wealth / health / advice / cautions` |
 | 组合解读规则 | `features/interpretation/composeResult.ts` | `PRIMARY_RULES`（时宫主规则）与 `MODIFIER_RULES`（跨步修正句），可增删 |
 | 音效 | `features/audio/soundEngine.ts` | WebAudio 实时合成，无音频文件；默认开启，但首次用户操作后才创建音频上下文；频率与时长可调 |
@@ -319,11 +349,17 @@ npm run build      # 产出 dist/
 npm run preview    # 本地验证构建产物
 ```
 
-### Cloudflare Pages
+### Cloudflare Workers（仓库根 `wrangler.jsonc`，走 Git 集成自动部署）
 
-- 构建命令：`npm run build`
-- 输出目录：`dist`
-- Node 版本：18 或更高
+仓库根部已带 wrangler 配置，Cloudflare 侧连 Git 后每次推 `main` 自动重建：
+
+- Worker 名：`dao`；静态资源目录：`./dist`；路由回退：`not_found_handling: single-page-application`
+- 构建命令：`npm run build`；部署命令：`npx wrangler deploy`
+- `observability.enabled: false`：纯静态站不需要 Workers Logs；此项目由配置托管，仪表板开关会显示为只读
+- 产物地址：`dao.<你的子域>.workers.dev`
+
+> 也可用 Cloudflare Pages：构建命令 `npm run build`、输出目录 `dist`、Node ≥ 18。两条线可并行，互不影响：
+> Pages 走 `docs/` 发布目录，Workers 走 `dist/`（`dist/` 不入库）。
 
 ### GitHub Pages（本项目现行方案）
 
@@ -409,12 +445,12 @@ npm run build:single    # 再内联成 dist-offline/掌中诀-单文件版.html�
 A：历法数据表可靠覆盖 1900-01-31 至 2100-12-31，超出范围的日期会明确报错而不是返回猜测值。
 
 **Q：在受限的沙箱环境里 `npm test` 报 `EPERM ... AppData\Local\Temp`，而且「测试文件数」每次都不一样？**
-A：这是**测试运行器**往系统临时目录写模块缓存时被环境拦截，**与项目代码无关**。Vitest 会把转译后的模块写入 `os.tmpdir()`，一旦这个写入被拒，承载该文件的 worker 线程会静默退出——表现为**每次运行随机少收集 1~2 个测试文件**（例如 141 → 105），但已运行的用例全绿、退出码仍为 0，极易被误判为「测试通过」。
+A：这是**测试运行器**往系统临时目录写模块缓存时被环境拦截，**与项目代码无关**。Vitest 会把转译后的模块写入 `os.tmpdir()`，一旦这个写入被拒，承载该文件的 worker 线程会静默退出——表现为**每次运行随机少收集 1~2 个测试文件**（例如 163 → 105），但已运行的用例全绿、退出码仍为 0，极易被误判为「测试通过」。
 
 按影响面从小到大，三种解法任选：
 
 ```bash
-# 1）最稳：关闭文件级并行，不再写该临时目录（本项目已验证：8 个文件 / 141 项全绿 / 0 error）
+# 1）最稳：关闭文件级并行，不再写该临时目录（本项目已验证：9 个文件 / 163 项全绿 / 0 error）
 npm run test:serial
 
 # 2）把临时目录指到项目内（macOS / Linux 有效）
@@ -424,7 +460,7 @@ TMPDIR="$PWD/.tmp" npm test
 TEMP="$PWD/.tmp" TMP="$PWD/.tmp" npm test
 ```
 
-> 判据：正常情况下应固定为 **8 个测试文件 / 141 项**。若数字偏小，即为上述问题，切 `test:serial` 即可。
+> 判据：正常情况下应固定为 **9 个测试文件 / 163 项**。若数字偏小，即为上述问题，切 `test:serial` 即可。
 
 **Q：我想改宫位释义文案或增删组合规则？**
 A：只改 `src/features/interpretation/` 下的两个文件即可，界面会自动跟随；算法与动画不受影响。
