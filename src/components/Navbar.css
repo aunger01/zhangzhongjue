@@ -254,7 +254,10 @@
   opacity: 0.9;
 }
 
-.navbar__menu button .navbar__switch-icon {
-  margin-right: 6px;
-  vertical-align: -2px;
+/* 菜单按钮为 space-between（历史记录徽标靠右），
+   切换项把图标与文字包进同一组，锁在左侧不留大空隙 */
+.navbar__menu-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
 }

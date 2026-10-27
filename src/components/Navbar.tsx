@@ -187,8 +187,10 @@ export function Navbar({
             {moreOpen ? (
               <div className="navbar__menu" id="nav-more-menu" role="menu" aria-label="更多功能">
                 <button type="button" role="menuitem" onClick={pick(onSwitchMode)} data-testid="nav-more-switch">
-                  <SwitchIcon />
-                  {mode === 'six' ? '九宫小六壬' : '六宫小六壬'}
+                  <span className="navbar__menu-label">
+                    <SwitchIcon />
+                    {mode === 'six' ? '九宫小六壬' : '六宫小六壬'}
+                  </span>
                 </button>
                 <button type="button" role="menuitem" onClick={pick(onOpenPlayGuide)} data-testid="nav-more-play">
                   玩法说明
