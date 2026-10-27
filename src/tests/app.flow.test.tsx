@@ -280,7 +280,15 @@ describe('六宫小六壬（传统六宫法）', () => {
       await flush(2);
     }
 
+    // 起课方式必选：未选时提交钮禁用，占位提示在位
+    const basisSelect = q('six-basis') as HTMLSelectElement;
+    expect(basisSelect.value).toBe('');
+    expect(basisSelect.required).toBe(true);
+    expect(q('six-submit').hasAttribute('disabled')).toBe(true);
+    expect(container.textContent).toContain('请选择问占方向');
+
     await click('six-source-report');
+    await selectOption('six-basis', 'topic:general');
     await typeText('six-raw-0', '13');
     await typeText('six-raw-1', '15');
     await typeText('six-raw-2', '7');

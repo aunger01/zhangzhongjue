@@ -100,7 +100,7 @@ function currentMoment(): { month: number; day: number; hour: number; calendar: 
 
 export function SixForm({ onSubmit }: SixFormProps) {
   const initial = useMemo(() => currentMoment(), []);
-  const [basis, setBasis] = useState<BasisValue>('topic:general');
+  const [basis, setBasis] = useState<BasisValue | ''>('');
   const [source, setSource] = useState<SixNumbersSource>('calendar');
   const [month, setMonth] = useState(initial.month);
   const [day, setDay] = useState(initial.day);
@@ -108,7 +108,7 @@ export function SixForm({ onSubmit }: SixFormProps) {
   const [calendar, setCalendar] = useState<CalendarInfo | null>(initial.calendar);
   const [raw, setRaw] = useState<[number, number, number]>([8, 15, 7]);
 
-  const resolved = useMemo(() => resolveBasis(basis), [basis]);
+  const resolved = useMemo(() => (basis ? resolveBasis(basis) : null), [basis]);
 
   const reducedReport = useMemo(
     () =>
@@ -128,7 +128,7 @@ export function SixForm({ onSubmit }: SixFormProps) {
     hour: reducedReport[2] ?? 0,
   };
 
-  const canSubmit = source === 'calendar' ? true : reportValid;
+  const canSubmit = basis !== '' && (source === 'calendar' ? true : reportValid);
 
   const numbersNote =
     source === 'calendar'
@@ -146,7 +146,7 @@ export function SixForm({ onSubmit }: SixFormProps) {
   };
 
   const handleSubmit = () => {
-    if (!canSubmit) return;
+    if (!canSubmit || !resolved) return;
     onSubmit({
       mode: 'six',
       originIndex: resolved.originIndex,
@@ -176,15 +176,19 @@ export function SixForm({ onSubmit }: SixFormProps) {
         <span className="badge badge--gold">传统起课法 · 模 6</span>
       </div>
 
-      {/* ---------- 一、起宫依据 ---------- */}
+      {/* ---------- 一、起课方式（必选） ---------- */}
       <label className="field">
-        <span className="field__label">依事由起课</span>
+        <span className="field__label">起课方式</span>
         <select
           className="select"
           value={basis}
           onChange={(event) => setBasis(event.target.value as BasisValue)}
+          required
           data-testid="six-basis"
         >
+          <option value="" disabled hidden>
+            请选择问占方向
+          </option>
           <optgroup label="依事由起课">
             {SIX_TOPICS.map((topic) => (
               <option key={topic.id} value={`topic:${topic.id}`}>
@@ -333,8 +337,12 @@ export function SixForm({ onSubmit }: SixFormProps) {
       <div className="six-form__preview" data-testid="six-preview">
         <div>
           <span className="field__label">起宫</span>
-          <strong className="six-form__origin">{resolved.originName}</strong>
-          <span className="faint">（{resolved.palaceLabel}）</span>
+          <strong className="six-form__origin">{resolved ? resolved.originName : '——'}</strong>
+          {resolved ? (
+            <span className="faint">（{resolved.palaceLabel}）</span>
+          ) : (
+            <span className="faint">　请先选择起课方式</span>
+          )}
         </div>
         <div>
           <span className="field__label">起数</span>
