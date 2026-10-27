@@ -255,7 +255,8 @@ describe('六宫小六壬（传统六宫法）', () => {
     await selectOption('six-day', '3');
     await selectOption('six-hour', '4');
 
-    expect(q('six-preview').textContent).toContain('留连');
+    // 起宫不再预览显示（保持神秘感），只揭示起数
+    expect(q('six-preview').textContent).not.toContain('留连');
     expect(q('six-preview').textContent).toContain('3、3、4');
 
     await click('six-submit');
@@ -339,7 +340,6 @@ describe('六宫小六壬（传统六宫法）', () => {
       await flush(2);
     }
     await selectOption('six-basis', 'topic:wealth');
-    expect(q('six-preview').textContent).toContain('留连');
 
     await selectOption('six-month', '3');
     await selectOption('six-day', '3');

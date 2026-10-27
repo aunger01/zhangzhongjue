@@ -333,17 +333,8 @@ export function SixForm({ onSubmit }: SixFormProps) {
         </>
       )}
 
-      {/* ---------- 三、预览 ---------- */}
+      {/* ---------- 三、预览（起宫留待落宫揭晓，保持神秘感） ---------- */}
       <div className="six-form__preview" data-testid="six-preview">
-        <div>
-          <span className="field__label">起宫</span>
-          <strong className="six-form__origin">{resolved ? resolved.originName : '——'}</strong>
-          {resolved ? (
-            <span className="faint">（{resolved.palaceLabel}）</span>
-          ) : (
-            <span className="faint">　请先选择起课方式</span>
-          )}
-        </div>
         <div>
           <span className="field__label">起数</span>
           <strong className="mono-num">
