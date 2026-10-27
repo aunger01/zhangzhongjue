@@ -238,6 +238,8 @@
   border-color: var(--line-strong);
   color: var(--gold-bright);
   letter-spacing: 0.1em;
+  /* 图标与文字的间距由 flex gap 统一控制，图标自身的 margin 已归零 */
+  gap: 5px;
 }
 
 .navbar__switch:hover {
@@ -247,7 +249,7 @@
 /* ---------- 宫制切换图标 ---------- */
 
 .navbar__switch-icon {
-  margin-right: 5px;
+  margin-right: 0;
   vertical-align: -2px;
   opacity: 0.9;
 }
