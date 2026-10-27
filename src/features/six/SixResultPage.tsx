@@ -80,6 +80,24 @@ export function SixResultPage({
             (verse) => `${verse.stepLabel}位${verse.palaceName}：${verse.lines.join('')}`,
           ),
         },
+        ...(interpretation.topicVerses.length > 0
+          ? [
+              {
+                title: '断课歌诀',
+                items: interpretation.topicVerses.map(
+                  (item) => `${item.stepLabel}位${item.palaceName}：${item.verse}`,
+                ),
+              },
+            ]
+          : []),
+        {
+          title: '用神与喜忌',
+          paragraphs: [
+            interpretation.yongshen.basis,
+            ...interpretation.yongshen.notes,
+            ...(interpretation.sameElementNote ? [interpretation.sameElementNote] : []),
+          ],
+        },
         { title: '积极因素', items: interpretation.positives },
         { title: '需要留意', items: interpretation.cautions },
         {
@@ -188,9 +206,33 @@ export function SixResultPage({
           </ul>
         </article>
 
-        <article className="card">
-          <h3 className="card__title">用神生克</h3>
-          <p className="result__text">{interpretation.relationNote}</p>
+        {interpretation.topicVerses.length > 0 ? (
+          <article className="card six-result__verses">
+            <h3 className="card__title">断课歌诀（依事由）</h3>
+            <p className="faint six-result__verse-lead">
+              依所问事由对应的歌诀直接断课，与下方断词互为参证。
+            </p>
+            <ul className="six-result__verse-list">
+              {interpretation.topicVerses.map((item) => (
+                <li key={item.step} data-testid={`six-topic-verse-${item.step}`}>
+                  <span className="badge badge--gold">
+                    {item.stepLabel}位 · {item.palaceName}
+                  </span>
+                  <p className="six-result__verse-text">{item.verse}。</p>
+                </li>
+              ))}
+            </ul>
+          </article>
+        ) : null}
+
+        <article className="card" data-testid="six-yongshen">
+          <h3 className="card__title">用神与喜忌</h3>
+          <p className="result__text">{interpretation.yongshen.basis}</p>
+          <ul className="result__list">
+            {interpretation.yongshen.notes.map((note) => (
+              <li key={note}>{note}</li>
+            ))}
+          </ul>
           {interpretation.sameElementNote ? (
             <p className="result__text note-warn">{interpretation.sameElementNote}</p>
           ) : null}

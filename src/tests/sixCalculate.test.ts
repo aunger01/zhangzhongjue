@@ -15,7 +15,9 @@ import {
   SIX_PALACES,
   SIX_PERSON_ORIGIN,
   SIX_TOPICS,
+  SIX_TOPIC_VERSES,
   SIX_UNLUCKY_NUMBERS,
+  SIX_VERSE_TOPIC_LABELS,
   getSixPalaceMeta,
   getSixTopic,
   sixPalaceIndex,
@@ -37,6 +39,7 @@ import {
   sixComposeInterpretation,
   sixElementRelation,
   sixNumberNote,
+  sixResolveYongshenIndex,
 } from '../features/six/sixMeanings';
 
 describe('六宫常量', () => {
@@ -356,7 +359,8 @@ describe('六宫释义', () => {
     expect(interpretation.verses[0].lines).toEqual(getSixPalaceMeta(3).verse);
     expect(interpretation.headline).toContain('速喜');
     expect(interpretation.overall).toContain('留连起课');
-    expect(interpretation.relationNote.length).toBeGreaterThan(10);
+    expect(interpretation.yongshen.notes.length).toBeGreaterThan(0);
+    expect(interpretation.yongshen.basis.length).toBeGreaterThan(6);
     expect(interpretation.numberNotes).toHaveLength(1);
     expect(interpretation.positives.length).toBeGreaterThanOrEqual(1);
     expect(interpretation.cautions.length).toBeGreaterThanOrEqual(1);
@@ -394,5 +398,126 @@ describe('六宫释义', () => {
       }
     }
     expect(found).toBe(true);
+  });
+});
+
+describe('🔴 文案依转录底本：标点齐全、不复用九宫、免责只出现一次', () => {
+  it('六宫断词四句均带句末标点，拼接后不缺标点', () => {
+    SIX_PALACE_META.forEach((palace) => {
+      expect(palace.verse).toHaveLength(4);
+      palace.verse.forEach((line) => {
+        expect(line).toMatch(/[；。]$/);
+      });
+      expect(palace.verse[3].endsWith('。')).toBe(true);
+      const joined = palace.verse.join('');
+      // 每句应为「七言，七言；」结构：整段至少含 7 个标点，不应出现连续两句之间无标点
+      expect((joined.match(/[，；。]/g) ?? []).length).toBeGreaterThanOrEqual(7);
+      expect(joined).toContain('，');
+    });
+    // 逐字核对底本第 2 页小吉断词（圣上指出缺标点的那一条）
+    expect(getSixPalaceMeta(4).verse.join('')).toBe(
+      '小吉最吉昌，路上好商量；阴人来报喜，失物在坤方；行人即便至，交易甚是强；凡事皆和合，病者祈上苍。',
+    );
+  });
+
+  it('断课歌诀五事由 × 六宫齐备，且与底本第 6~7 页一致', () => {
+    const topics = Object.keys(SIX_TOPIC_VERSES) as Array<keyof typeof SIX_TOPIC_VERSES>;
+    expect(topics).toHaveLength(5);
+    topics.forEach((topicId) => {
+      expect(SIX_VERSE_TOPIC_LABELS[topicId].length).toBeGreaterThan(0);
+      SIX_PALACES.forEach((palace) => {
+        const verse = SIX_TOPIC_VERSES[topicId][palace];
+        expect(verse.length).toBeGreaterThan(10);
+        expect(verse).toContain('，');
+      });
+    });
+    expect(SIX_TOPIC_VERSES.wealth['速喜']).toBe('财占速喜九分财，若要得全贵人帮');
+    expect(SIX_TOPIC_VERSES.marriage['赤口']).toBe('婚占赤口婚不吉，棒打鸳鸯各一方');
+    expect(SIX_TOPIC_VERSES.illness['空亡']).toBe('病占空亡为无病，有病可能是癔病');
+    expect(SIX_TOPIC_VERSES.lawsuit['小吉']).toBe('官司小吉要答礼，舍财保身得平安');
+    expect(SIX_TOPIC_VERSES.travel['大安']).toBe('大安外出不宜远，不求财来可以走');
+  });
+
+  it('用神取法依底本：占事以宫位取用神，通用与占人以日宫为用神', () => {
+    expect(sixResolveYongshenIndex('marriage', 0)).toBe(0);
+    expect(sixResolveYongshenIndex('wealth', 0)).toBe(1);
+    expect(sixResolveYongshenIndex('illness', 0)).toBe(2);
+    expect(sixResolveYongshenIndex('lawsuit', 0)).toBe(3);
+    expect(sixResolveYongshenIndex('travel', 0)).toBe(4);
+    // 通用问事 / 占人：以日宫为用神（不因起宫改变）
+    expect(sixResolveYongshenIndex('general', 3)).toBe(3);
+    expect(sixResolveYongshenIndex(null, 5)).toBe(5);
+  });
+
+  it('求财落速喜的解读引本课歌诀，且用神取留连', () => {
+    const result = createSixResult({
+      originIndex: 1,
+      originLabel: '求财经商（财帛宫·留连）',
+      topicId: 'wealth',
+      month: 3,
+      day: 3,
+      hour: 4,
+      numbersNote: '农历三月初三 · 卯时',
+    });
+    const interpretation = sixComposeInterpretation(result, {
+      inputSummary: '农历三月初三 · 卯时',
+      originLabel: '求财经商（财帛宫·留连）',
+      topicId: 'wealth',
+    });
+
+    expect(interpretation.steps.map((step) => step.palaceName)).toEqual(['赤口', '空亡', '速喜']);
+    expect(interpretation.topicVerses).toHaveLength(3);
+    expect(interpretation.topicVerses[0].verse).toBe('财占赤口一口财，辛辛苦苦才能赚到');
+    expect(interpretation.topicVerses[2].verse).toBe('财占速喜九分财，若要得全贵人帮');
+    expect(interpretation.yongshen.palaceName).toBe('留连');
+    expect(interpretation.yongshen.basis).toContain('以宫位取用神');
+    expect(interpretation.shareText).toContain('断课歌诀');
+    expect(interpretation.shareText).toContain('财占速喜九分财');
+  });
+
+  it('通用问事不产生歌诀；占人起课亦无歌诀', () => {
+    const result = createSixResult({
+      originLabel: '通用问事',
+      topicId: 'general',
+      month: 3,
+      day: 3,
+      hour: 4,
+      numbersNote: '农历三月初三 · 卯时',
+    });
+    const interpretation = sixComposeInterpretation(result, {
+      inputSummary: '农历三月初三 · 卯时',
+      originLabel: '通用问事',
+      topicId: 'general',
+    });
+    expect(interpretation.topicVerses).toHaveLength(0);
+    expect(interpretation.yongshen.basis).toContain('日宫');
+  });
+
+  it('免责声明全页只出现一次，且为六宫专属文案（不提九宫、不逐条重复法律提示）', () => {
+    const result = createSixResult({
+      originIndex: 1,
+      originLabel: '占人（女）· 留连起课',
+      month: 3,
+      day: 3,
+      hour: 4,
+      numbersNote: '农历三月初三 · 卯时',
+    });
+    const interpretation = sixComposeInterpretation(result, {
+      inputSummary: '农历三月初三 · 卯时',
+      originLabel: '占人（女）· 留连起课',
+    });
+
+    expect(interpretation.disclaimer).toContain('六宫小六壬');
+    expect(interpretation.disclaimer).not.toContain('九宫');
+    // 赤口落在本局（月位），旧版会把「法律判断 / 咨询专业人士」塞进每条留意项
+    expect(interpretation.cautions.some((item) => item.includes('赤口'))).toBe(true);
+    const repeated = interpretation.cautions.filter(
+      (item) => item.includes('法律判断') || item.includes('咨询专业人士'),
+    );
+    expect(repeated).toHaveLength(0);
+    // 留意项不得出现「月位赤口：月起赤口：」式的双重前缀
+    interpretation.cautions.forEach((item) => {
+      expect(item).not.toMatch(/位[^：]{2,4}：[月日时]起/);
+    });
   });
 });

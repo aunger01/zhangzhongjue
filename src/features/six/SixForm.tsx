@@ -12,6 +12,7 @@
 import { useMemo, useState } from 'react';
 import {
   SIX_PERSON_ORIGIN,
+  SIX_STEP_SUBJECT,
   SIX_TOPICS,
   getSixTopic,
   sixPalaceIndex,
@@ -35,6 +36,8 @@ export interface SixSubmission {
   originIndex: number;
   originName: SixPalaceName;
   originLabel: string;
+  /** 起宫依据的事由 id（通用 / 占人为 null） */
+  topicId: SixTopicId | null;
   month: number;
   day: number;
   hour: number;
@@ -46,7 +49,6 @@ export interface SixSubmission {
 
 export interface SixFormProps {
   onSubmit: (submission: SixSubmission) => void;
-  onCancel: () => void;
 }
 
 /** 起宫依据的选项值：topic:<id> / person:male|female */
@@ -55,6 +57,8 @@ type BasisValue = `topic:${SixTopicId}` | `person:${keyof typeof SIX_PERSON_ORIG
 interface ResolvedBasis {
   originIndex: number;
   originName: SixPalaceName;
+  /** 事由 id（占人 / 自定义为 null） */
+  topicId: SixTopicId | null;
   label: string;
   verse: string;
   note: string;
@@ -68,6 +72,7 @@ function resolveBasis(value: BasisValue): ResolvedBasis {
     return {
       originIndex: sixPalaceIndex(config.origin),
       originName: config.origin,
+      topicId: null,
       label: `占人（${gender === 'male' ? '男' : '女'}）· ${config.origin}起课`,
       verse: gender === 'male' ? '男起重阳，小吉是重阳，故男起小吉' : '女起重阴，留连是重阴，故女起留连',
       note: config.note,
@@ -79,6 +84,7 @@ function resolveBasis(value: BasisValue): ResolvedBasis {
   return {
     originIndex: sixPalaceIndex(topic.origin),
     originName: topic.origin,
+    topicId: topic.id,
     label: `${topic.label}（${topic.palaceLabel}·${topic.origin}）`,
     verse: topic.verse,
     note: topic.note,
@@ -98,7 +104,7 @@ function currentMoment(): { month: number; day: number; hour: number; calendar: 
   }
 }
 
-export function SixForm({ onSubmit, onCancel }: SixFormProps) {
+export function SixForm({ onSubmit }: SixFormProps) {
   const initial = useMemo(() => currentMoment(), []);
   const [basis, setBasis] = useState<BasisValue>('topic:general');
   const [source, setSource] = useState<SixNumbersSource>('calendar');
@@ -152,6 +158,7 @@ export function SixForm({ onSubmit, onCancel }: SixFormProps) {
       originIndex: resolved.originIndex,
       originName: resolved.originName,
       originLabel: resolved.label,
+      topicId: resolved.topicId,
       month: numbers.month,
       day: numbers.day,
       hour: numbers.hour,
@@ -176,8 +183,8 @@ export function SixForm({ onSubmit, onCancel }: SixFormProps) {
       </div>
 
       <p className="faint six-form__lead">
-        六宫只用六个宫位：大安、留连、速喜、赤口、小吉、空亡。与九宫玩法不同之处是
-        <strong>起宫不固定</strong>——由事由或占人决定；空亡不起课，只作落宫。
+        六宫只用六个宫位：大安、留连、速喜、赤口、小吉、空亡。
+        <strong>起宫不固定</strong>——依事由（起课歌诀）或占人（女起留连、男起小吉）决定；空亡不起课，只作落宫。
       </p>
 
       {/* ---------- 一、起宫依据 ---------- */}
@@ -362,13 +369,10 @@ export function SixForm({ onSubmit, onCancel }: SixFormProps) {
         >
           开始掐指
         </button>
-        <button type="button" className="btn btn--ghost" onClick={onCancel}>
-          返回九宫
-        </button>
       </div>
 
       <p className="faint six-form__note">
-        断课提示：月位看父母长辈上级，日位看自身亲属，时位看子孙晚辈与财物。
+        断课提示：{SIX_STEP_SUBJECT.month}为月位，{SIX_STEP_SUBJECT.day}为日位，{SIX_STEP_SUBJECT.hour}为时位。
         本页只作传统文化体验与自我省思，不构成任何专业建议。
       </p>
     </form>

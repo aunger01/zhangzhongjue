@@ -24,6 +24,7 @@ import {
   SIX_PALACE_COUNT,
   SIX_PALACES,
   type SixPalaceName,
+  type SixTopicId,
 } from './sixConstants';
 
 /** 三步演算的固定步骤顺序（与九宫一致：月 → 日 → 时） */
@@ -46,6 +47,8 @@ export interface SixDivinationInput extends DivinationInput {
   numbersNote: string;
   /** 取数入口：农历月日时 / 自报三数 */
   numbersSource: SixNumbersSource;
+  /** 起宫依据的事由 id（通用 / 占人为 null），用于取用神与断课歌诀 */
+  topicId: SixTopicId | null;
 }
 
 /** 六宫演算结果（结构上兼容九宫 DivinationResult，可直接交给同一套状态机播放） */
@@ -182,6 +185,8 @@ export interface CreateSixResultOptions {
   numbersNote: string;
   /** 取数入口 */
   numbersSource?: SixNumbersSource;
+  /** 起宫依据的事由 id（通用 / 占人为 null） */
+  topicId?: SixTopicId | null;
   /** 固定创建时间（测试用） */
   createdAt?: number;
 }
@@ -205,6 +210,7 @@ export function createSixResult(options: CreateSixResultOptions): SixResult {
     originLabel: options.originLabel,
     numbersNote: options.numbersNote,
     numbersSource: options.numbersSource ?? 'calendar',
+    topicId: options.topicId ?? null,
     algorithmId: SIX_ALGORITHM_ID,
     algorithmVersion: SIX_ALGORITHM_VERSION,
   };

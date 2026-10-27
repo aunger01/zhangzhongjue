@@ -24,6 +24,39 @@ export interface NavbarProps {
   onSwitchMode: () => void;
 }
 
+/**
+ * 宫制切换图标（双向箭头）：提示「点此切换到另一宫制」
+ */
+function SwitchIcon() {
+  return (
+    <svg
+      className="navbar__switch-icon"
+      width="14"
+      height="14"
+      viewBox="0 0 16 16"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        d="M2.6 5.3h9.1M9.4 2.7l2.5 2.6-2.5 2.6"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M13.4 10.7H4.3M6.6 8.1 4.1 10.7l2.5 2.6"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export function Navbar({
   onHome,
   onOpenPlayGuide,
@@ -92,7 +125,17 @@ export function Navbar({
                   : '切换到六宫小六壬（传统六宫：大安至空亡）'
               }
             >
-              {mode === 'six' ? '九宫小六壬' : '六宫小六壬'}
+              {mode === 'six' ? (
+                <>
+                  <SwitchIcon />
+                  九宫小六壬
+                </>
+              ) : (
+                <>
+                  <SwitchIcon />
+                  六宫小六壬
+                </>
+              )}
             </button>
             <button
               type="button"
@@ -144,7 +187,8 @@ export function Navbar({
             {moreOpen ? (
               <div className="navbar__menu" id="nav-more-menu" role="menu" aria-label="更多功能">
                 <button type="button" role="menuitem" onClick={pick(onSwitchMode)} data-testid="nav-more-switch">
-                  {mode === 'six' ? '切换到九宫小六壬' : '切换到六宫小六壬'}
+                  <SwitchIcon />
+                  {mode === 'six' ? '九宫小六壬' : '六宫小六壬'}
                 </button>
                 <button type="button" role="menuitem" onClick={pick(onOpenPlayGuide)} data-testid="nav-more-play">
                   玩法说明

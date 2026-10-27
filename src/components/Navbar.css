@@ -243,3 +243,16 @@
 .navbar__switch:hover {
   background: rgba(212, 169, 79, 0.12);
 }
+
+/* ---------- 宫制切换图标 ---------- */
+
+.navbar__switch-icon {
+  margin-right: 5px;
+  vertical-align: -2px;
+  opacity: 0.9;
+}
+
+.navbar__menu button .navbar__switch-icon {
+  margin-right: 6px;
+  vertical-align: -2px;
+}

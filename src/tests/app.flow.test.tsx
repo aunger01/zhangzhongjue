@@ -296,6 +296,41 @@ describe('六宫小六壬（传统六宫法）', () => {
     expect(modal.textContent).toContain('(startIndex + count - 1) % 6');
     expect(modal.textContent).toContain('起课歌诀');
     expect(modal.textContent).toContain('空亡不起课');
+    expect(modal.textContent).toContain('断课歌诀');
     expect(modal.textContent).toContain('不构成');
+    // 六宫规则不得再套用九宫的定义标题
+    expect(modal.textContent).not.toContain('九宫定义');
+  });
+
+  it('六宫各页不出现「返回九宫」按钮；切换入口带切换图标', async () => {
+    await click('nav-switch-mode');
+    for (let i = 0; i < 20 && !container.querySelector('[data-testid="six-basis"]'); i += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      await flush(2);
+    }
+    expect(q('nav-switch-mode').querySelector('svg')).toBeTruthy();
+    expect(container.textContent).not.toContain('返回九宫');
+  });
+
+  it('求财例：结果页引断课歌诀（财占），并给出用神喜忌', async () => {
+    await click('nav-switch-mode');
+    for (let i = 0; i < 20 && !container.querySelector('[data-testid="six-basis"]'); i += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      await flush(2);
+    }
+    await selectOption('six-basis', 'topic:wealth');
+    expect(q('six-basis-verse').textContent).toContain('财帛宫');
+
+    await selectOption('six-month', '3');
+    await selectOption('six-day', '3');
+    await selectOption('six-hour', '4');
+    await click('six-submit');
+
+    await click('six-btn-skip');
+
+    expect(q('six-topic-verse-hour').textContent).toContain('财占速喜九分财');
+    expect(q('six-topic-verse-month').textContent).toContain('财占赤口一口财');
+    expect(container.textContent).toContain('用神与喜忌');
+    expect(container.textContent).toContain('以宫位取用神');
   });
 });

@@ -200,6 +200,7 @@ export default function App() {
         hour: submission.hour,
         numbersNote: submission.numbersNote,
         numbersSource: submission.numbersSource,
+        topicId: submission.topicId,
       });
       setSixPending(submission);
       sixActions.load(created);
@@ -282,6 +283,7 @@ export default function App() {
     return sixComposeInterpretation(sixResult, {
       inputSummary: sixPending.numbersNote,
       originLabel: sixPending.originLabel,
+      topicId: sixPending.topicId,
       numberNotes: sixPending.numberNotes,
     });
   }, [sixResult, sixPending]);
@@ -336,7 +338,7 @@ export default function App() {
         {view === 'six-form' ? (
           <div className="container app__form-view">
             <Suspense fallback={<p className="notice">正在加载六宫起课模块……</p>}>
-              <SixForm onSubmit={handleSixSubmit} onCancel={() => setView('home')} />
+              <SixForm onSubmit={handleSixSubmit} />
             </Suspense>
           </div>
         ) : null}

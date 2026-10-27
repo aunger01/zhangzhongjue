@@ -26,3 +26,6 @@ blob-report
 # 系统文件
 .DS_Store
 Thumbs.db
+
+# 本地纪律文档不入库
+本地副本须知.md

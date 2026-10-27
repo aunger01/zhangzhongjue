@@ -1,41 +1,53 @@
 /**
  * 六宫释义配置与解读合成
  *
- * 释义与组件完全分离：这里只放文案与规则，不引用任何视图代码。
- * 文案取自《小六壬精华》（掌中诀网站开发/六宫小六壬.pdf）的断词、月日时取象、
- * 用神喜忌与五行取事，再用与九宫线一致的"象征性提示"笔法落成现代中文。
+ * 唯一底本：《小六壬精华》逐字转录（掌中诀网站开发/六宫小六壬_PDF原文转录.md）。
+ * 所有断词、一句话象义、月日时取象、用神喜忌、五行取事、断课歌诀均引底本原文，
+ * 不复用九宫（divination / interpretation）的任何释义内容。
  *
  * ⚠️ 纪律：本模块只解释已算出的宫位，绝不重算、不改宫位；
- * 对健康 / 财务 / 法律等高风险事项不作确定性结论。
+ * 对健康 / 财务 / 法律等高风险事项不作确定性结论，免责声明全页只出现一次。
  */
 
-import { getPalaceMeta, type PalaceName, type PalaceOmen } from '../divination/palaceConstants';
 import { STEP_LABELS } from '../divination/types';
 import type { StepReading, OverallTone } from '../interpretation/composeResult';
-import { INTERPRETATION_DISCLAIMER, PRIVACY_NOTICE } from '../interpretation/palaceMeanings';
 import {
+  SIX_GUARDIAN_MEANINGS,
   SIX_NUMBER_MEANINGS,
   SIX_ODD_NUMBERS,
   SIX_PALACE_META,
+  SIX_PALACES,
   SIX_STEP_SUBJECT,
-  SIX_TOPICS,
   getSixPalaceMeta,
+  getSixTopic,
+  getSixTopicVerse,
   type SixPalaceName,
+  type SixTopicId,
 } from './sixConstants';
 import type { SixResult } from './sixCalculate';
 
 /* ------------------------------------------------------------------ */
-/* 单宫释义                                                             */
+/* 六宫专属合规文案（不用九宫版；免责全页只出现一次）                     */
+/* ------------------------------------------------------------------ */
+
+export const SIX_INTERPRETATION_DISCLAIMER =
+  '本页解读基于传统六宫小六壬（《小六壬精华》断词与歌诀）整理生成，属于传统文化体验与自我省思工具，不具备科学预测能力，也不构成医疗、投资、法律或其他专业建议。涉及健康、财务、法律等重要事项，请以专业人士意见为准。';
+
+export const SIX_PRIVACY_NOTICE =
+  '你填写的农历月日时或自报三数只在当前浏览器内存中参与计算：不上传、不保存、不要求注册，也不使用任何第三方分析或广告脚本。历史记录（若启用）仅保存在本机浏览器，可随时一键清空。';
+
+/* ------------------------------------------------------------------ */
+/* 单宫释义（断词与一句话象义均引底本原文）                               */
 /* ------------------------------------------------------------------ */
 
 export interface SixPalaceReading {
-  /** 一句话象意（承 PDF「身不动时 / 卒未归时…」） */
+  /** 一句话象义（底本第 3 页：身不动 / 卒未归 / 人便至 / 官事凶 / 人来喜 / 信音稀） */
   summary: string;
-  /** 月位：父母、长辈、上级层面的处境 */
+  /** 月位（父母、长辈、上级、领导、官员）落此宫的断语，引断词原句 */
   asMonth: string;
-  /** 日位：自身、亲属层面的处境 */
+  /** 日位（自身、妻妾、亲属、家内）落此宫的断语 */
   asDay: string;
-  /** 时位：子孙、晚辈、财物层面的处境 */
+  /** 时位（子孙、晚辈、下级、物品、六畜、财产、方位）落此宫的断语 */
   asHour: string;
   advice: readonly string[];
   cautions: readonly string[];
@@ -43,57 +55,57 @@ export interface SixPalaceReading {
 
 export const SIX_PALACE_READINGS: Readonly<Record<SixPalaceName, SixPalaceReading>> = {
   大安: {
-    summary: '身不动时，主安稳守成，事在旧处。',
-    asMonth: '月起大安：起因安稳，多由长辈、上级或既有基础促成，不必另起炉灶。',
-    asDay: '日临大安：自身处境平顺，宜按旧路推进，动不如静。',
-    asHour: '时落大安：收束安稳，结局多以「守住」呈现，应期不急。',
-    advice: ['按既定节奏推进，不必临时改弦更张。', '把力气放在已经握在手里的事上。'],
-    cautions: ['过度求稳会错过窗口：稳不等于不动。'],
+    summary: '身不动：失物、行人等一切静止不动，主平安。',
+    asMonth: '月起大安：「宅舍保平安」——起因安稳，父母长辈与上级处可依托。',
+    asDay: '日临大安：「行人身未动」——自身宜静守，按原路推进，动不如静。',
+    asHour: '时落大安：「求财在坤方，失物去不远」——收束安稳，所求所失皆在近处。',
+    advice: ['大安主静：宜守成，按既定节奏推进。', '所寻之物「去不远」：先从近处、宅舍找起。'],
+    cautions: ['大安主不动，过静则滞：该推动之处仍须推动。'],
   },
   留连: {
-    summary: '卒未归时，主迟滞未决，事难速成。',
-    asMonth: '月起留连：起因带着犹豫，动念之初便不够干脆，或受他人牵延。',
-    asDay: '日临留连：自身处境胶着，反复沟通、来回拉扯，进度慢于预期。',
-    asHour: '时落留连：收束停在「还没定」，须主动设期限，否则久拖成局。',
-    advice: ['给自己设一个明确期限，到期即做决断。', '先把最卡的那一环解决，其余自然松动。'],
-    cautions: ['更须防口舌：话不宜说满，事不宜拖久。'],
+    summary: '卒未归：时机未到，凡事暂缓，失物未远。',
+    asMonth: '月起留连：「求谋日未明」——起因便带迟滞，前提未落实，宜先备齐条件。',
+    asDay: '日临留连：「去者未回程」——自身胶着，凡事暂缓，进度慢于预期。',
+    asHour: '时落留连：「失物南方见」——收束未定，久拖之事宜主动设期。',
+    advice: ['留连主缓：「官事只宜缓」，急也无用。', '给自己定个期限，到期即做决断。'],
+    cautions: ['留连「更须防口舌」：话不说满，事不拖久。'],
   },
   速喜: {
-    summary: '人即至时，主喜信速来，应期在近。',
-    asMonth: '月起速喜：起因带消息与契机，多由外部信息触发。',
-    asDay: '日临速喜：自身处境转快，答复与反馈比预期来得早。',
-    asHour: '时落速喜：收束偏快，近期可见分晓，宜及时接住。',
-    advice: ['对消息及时回应，别让机会在犹豫里流走。', '短期有成即收，不必贪多。'],
-    cautions: ['速则不细：快的时候最容易漏掉细节。'],
+    summary: '人便至：时机已到，刻不容缓，速办成功。',
+    asMonth: '月起速喜：「喜来临」——起因带消息与契机，应期在近。',
+    asDay: '日临速喜：「求财向南行」——自身转快，宜把握时机、速办速决。',
+    asHour: '时落速喜：「田宅六畜吉」——收束向好，近期可见分晓。',
+    advice: ['速喜主快：时机已到，刻不容缓。', '短期有成即收，不必贪多。'],
+    cautions: ['速则易漏：越快越要核好细节。'],
   },
   赤口: {
-    summary: '官事凶时，主口舌是非，争竞生嫌。',
-    asMonth: '月起赤口：起因多涉言语、约定与规则之争，官非切要防。',
-    asDay: '日临赤口：自身处于是非场中，沟通易生误会，宜留痕、宜书面。',
-    asHour: '时落赤口：收束带争，结局易以口舌或契约摩擦呈现，慎言慎约。',
-    advice: ['重要沟通留书面凭据，口头承诺补一句确认。', '争议先降级再处理，把情绪与事实分开。'],
-    cautions: ['本页不作任何法律判断；涉诉或涉约请咨询专业人士。'],
+    summary: '官事凶：口舌是非，主事不利，办事宜缓。',
+    asMonth: '月起赤口：「官非切要防」——起因多涉言语与规矩之争。',
+    asDay: '日临赤口：「行人有惊惶」——自身处于是非之中，沟通易生误会。',
+    asHour: '时落赤口：「失物速速讨」——收束带争，宜及早处理，慎言慎约。',
+    advice: ['赤口主争：「办事宜缓」，先降温再处理。', '重要约定落成文字，口头承诺补一句确认。'],
+    cautions: ['赤口主口舌：少说多听，把情绪与事实分开。'],
   },
   小吉: {
-    summary: '人来喜时，主和合小成，凡事可商量。',
-    asMonth: '月起小吉：起因带和合之气，多由他人引荐或商量而起。',
-    asDay: '日临小吉：自身处境和顺，交易与谈判都还有余地。',
-    asHour: '时落小吉：收束小而实，格局不大却是可依的一步。',
-    advice: ['把话摆上桌面谈，商量比强推更有效。', '小成之后稳住，不急着追加筹码。'],
-    cautions: ['「吉」是相对的：小吉主小成，别按大成来安排。'],
+    summary: '人来喜：喜事到来，办事吉利，成功在望。',
+    asMonth: '月起小吉：「路上好商量」——起因带和合之气，有人引荐帮忙。',
+    asDay: '日临小吉：「交易甚是强」——自身和顺，谈判交易有余地。',
+    asHour: '时落小吉：「凡事皆和合」——收束小而实，可以落定。',
+    advice: ['小吉主和：把话摆上桌面，商量成事。', '「交易甚是强」：谈得成，小成即安。'],
+    cautions: ['小吉主小成：别按大成来安排后手。'],
   },
   空亡: {
-    summary: '信音稀时，主谋事落空，求而无益。',
-    asMonth: '月起空亡：起因本身带虚，信息不足或前提尚未落实。',
-    asDay: '日临空亡：自身处境多耗，忙而无功，宜先辨真伪再投入。',
-    asHour: '时落空亡：收束落空，求财无利、失物难寻，宜缓不宜强求。',
-    advice: ['把关键动作放在「验证之后」，先小样试水。', '涉及资金与承诺的事，预留退路。'],
-    cautions: ['空亡主虚：这一局不宜据此加码。'],
+    summary: '信音稀：查无音信，难有结果，办事无成。',
+    asMonth: '月起空亡：「阴人少乖张」——起因本身带虚，信息不足。',
+    asDay: '日临空亡：「求财无利益」——自身多耗，忙而无功。',
+    asHour: '时落空亡：「失物寻不见」——收束落空，宜缓不宜强求。',
+    advice: ['空亡主空：先辨真伪，再谈投入。', '涉及资金与承诺，预留退路。'],
+    cautions: ['空亡主落空：此局不宜据此加码。'],
   },
 };
 
 /* ------------------------------------------------------------------ */
-/* 五行生克（用神喜忌）                                                 */
+/* 用神（底本第 7~8 页：占事取用神 / 用神喜忌）                           */
 /* ------------------------------------------------------------------ */
 
 const GENERATES: Readonly<Record<string, string>> = {
@@ -119,11 +131,7 @@ export type SixElementRelation =
   | 'other-generates'
   | 'other-controls';
 
-/**
- * 用神（日宫，取"自身"）与时辰宫的五行关系。
- * 依 PDF「用神喜忌」：与吉神相冲克则吉事不吉；与凶神相冲克则凶中有吉；
- * 与吉神相生则吉上加吉；与凶神相生则雪上加霜。
- */
+/** 两宫五行的生克关系（供用神喜忌判定） */
 export function sixElementRelation(dayElement: string, hourElement: string): SixElementRelation {
   if (dayElement === hourElement) return 'same';
   if (GENERATES[dayElement] === hourElement) return 'self-generates';
@@ -132,54 +140,121 @@ export function sixElementRelation(dayElement: string, hourElement: string): Six
   return 'other-controls';
 }
 
-const RELATION_TEXT: Readonly<Record<SixElementRelation, string>> = {
-  same: '日用神与时辰宫同气：事体一以贯之，取向一致，但容易一条道走到黑。',
-  'self-generates': '日宫之气生时辰宫：自身投入在往外送，付出多而回收慢，宜量力。',
-  'self-controls': '日宫之气克时辰宫：自身能压住局面，主动权在我，但用力过猛易伤和气。',
-  'other-generates': '时辰宫之气生助日宫：外来得力，收束处有依靠，宜借势而不必独撑。',
-  'other-controls': '时辰宫之气克日宫：外势压身，收束处受制，宜先卸力再谈推进。',
-};
+/** 吉神与凶神（底本第 8 页「用神喜忌」以吉神 / 凶神论生克） */
+const AUSPICIOUS_PALACES: ReadonlySet<string> = new Set(['大安', '速喜', '小吉']);
 
-/** 月日时三宫五行同类所主（PDF 第 8~9 页原文） */
+export interface SixYongshen {
+  /** 用神宫名 */
+  palaceName: SixPalaceName;
+  palaceIndex: number;
+  /** 取用神的依据（底本原文） */
+  basis: string;
+  /** 用神喜忌断语（逐条对应课内其余宫位） */
+  notes: string[];
+}
+
+/**
+ * 取用神（底本第 7 页「占事取用神」）：
+ *   占婚姻以大安为用神、求财以留连、疾病以速喜、官司以赤口、出行以小吉；
+ *   通用问事与占人起课无指定宫位，以日宫（自身）为用神。
+ */
+export function sixResolveYongshenIndex(topicId: SixTopicId | null, dayIndex: number): number {
+  if (topicId && topicId !== 'general') {
+    return sixPalaceIndexOf(getSixTopic(topicId).origin);
+  }
+  return dayIndex;
+}
+
+function sixPalaceIndexOf(name: SixPalaceName): number {
+  return SIX_PALACES.indexOf(name);
+}
+
+/** 按底本「用神喜忌」生成断语：与吉神 / 凶神相冲克、相生的四种组合，外加逢空亡 */
+function buildYongshenNotes(
+  yongshenIndex: number,
+  stepMetas: ReadonlyArray<{ step: 'month' | 'day' | 'hour'; index: number }>,
+): string[] {
+  const yongshen = getSixPalaceMeta(yongshenIndex);
+  const notes: string[] = [];
+
+  if (yongshen.name === '空亡') {
+    notes.push('课内用神逢空亡：主事情虚假，吉凶变动不定，寻人望事有变。');
+  }
+
+  for (const { step, index } of stepMetas) {
+    if (index === yongshenIndex) continue;
+    const other = getSixPalaceMeta(index);
+    const relation = sixElementRelation(yongshen.element, other.element);
+    const otherIsAuspicious = AUSPICIOUS_PALACES.has(other.name);
+    const otherKind = otherIsAuspicious ? `吉神${other.name}` : `凶神${other.name}`;
+    const stepLabel = STEP_LABELS[step];
+
+    if (relation === 'self-controls' || relation === 'other-controls') {
+      notes.push(
+        `用神${yongshen.name}（${yongshen.element}）与${stepLabel}位${otherKind}（${other.element}）相冲克：${
+          otherIsAuspicious ? '主吉事不吉，办事无成，喜事成空。' : '主凶事不凶，凶中有吉，化险为夷。'
+        }`,
+      );
+    } else if (relation === 'self-generates' || relation === 'other-generates') {
+      notes.push(
+        `用神${yongshen.name}（${yongshen.element}）与${stepLabel}位${otherKind}（${other.element}）相生：${
+          otherIsAuspicious ? '主吉事更吉，喜上加喜。' : '主凶事更凶，雪上加霜。'
+        }`,
+      );
+    } else {
+      notes.push(
+        `用神${yongshen.name}与${stepLabel}位${other.name}五行同气（${other.element}）：取向一致，事体一贯。`,
+      );
+    }
+  }
+
+  return notes;
+}
+
+/* ------------------------------------------------------------------ */
+/* 五行同类所主与五行取事（底本第 8~9 页原文）                            */
+/* ------------------------------------------------------------------ */
+
+/** 月日时三宫五行同类所主（底本第 8 页原文） */
 const SAME_ELEMENT_NOTES: Readonly<Record<string, string>> = {
-  木: '月日时皆是木（木重）：主事有争端，或囚伏不动，克泄者有生。',
-  火: '月日时皆是火（火旺）：主事有拖延，官司牵连，口舌是非，居住之处不吉。',
-  金: '月日时皆是金（金沉）：主官司凶事，邪淫奸私，六亲刑克，家宅不安。',
-  水: '月日时皆是水（水猛）：主漂流，虽吉无生，仁而无恩，桃花多，多情。',
-  土: '月日时皆是土（土厚）：主办事迟滞不动，牢狱凶灾。',
+  木: '月、日、时与用神都是木或木重：主事有争端，或囚伏不动，克泄者有生。',
+  火: '月、日、时都是火或火旺：主事有拖延，官司牵连，口舌是非，居住之处不吉。',
+  金: '月、日、时都是金或金沉：主官司凶事，邪淫奸私，六亲刑克，家宅不安。',
+  水: '月、日、时都是水或水猛：主漂流，虽吉无生，仁而无恩，桃花多，多情。',
+  土: '月、日、时都是土或土厚：主办事迟滞不动，牢狱凶灾。',
 };
 
-/** 五行取事（PDF 第 9 页原文，供规则说明引用） */
+/** 五行取事（底本第 9 页原文，供规则说明引用） */
 export const SIX_ELEMENT_CASES: ReadonlyArray<{ title: string; text: string }> = [
   {
     title: '木逢旺金有凶灾',
-    text: '青龙木逢白虎旺金克之，主官司失利、外出不吉、求财不得、婚姻不成；木为肢体，亦主四肢筋骨之伤。',
+    text: '青龙木逢白虎旺金克为青龙死，主官司失利，外出不吉，求财不得，婚姻不成，办事不成；木为肢体遭旺金克，损四肢伤筋骨，主有肝病、风瘫病、眼目之疾。',
   },
   {
     title: '旺金遇火有凶伤',
-    text: '白虎旺金遇腾蛇火，主血光凶伤，或田地房产、合同不明、妇女隐私之事斗打官司。',
+    text: '白虎旺金遇腾蛇火有血光凶伤，腾蛇为田土主暗昧不明事，或因田地房产、合同不明、妇女隐私之事斗打官司。',
   },
   {
     title: '旺土挡水走不顺',
-    text: '小吉水遇勾陈旺土，主外出不顺有阻隔；小吉为桃花，桃花受阻则婚姻不成，有小人说坏话。',
+    text: '小吉水遇勾陈旺土主外出不顺有阻隔；小吉为桃花，桃花受阻婚姻不成，有小人说坏话、拆婚。',
   },
   {
     title: '木入旺土是牢狱',
-    text: '青龙木见勾陈旺土，主有牢狱之灾或凶灾；木见旺土，土埋木，棺材是木，是被土埋的，主死灾。',
+    text: '青龙木见勾陈旺土主有牢狱之灾或凶灾；木见旺土，土埋木，棺材是木，是被土埋的，表示死灾。',
   },
   {
     title: '水来克火有病灾',
-    text: '小吉水去克朱雀火，朱雀乃火神不宜克，克者对自身不好，主心脑之疾、肾虚之病。',
+    text: '小吉水去克朱雀火神主有病：朱雀乃火神不宜克，克者对自身不好；火为心和头部，水克火主心脑疾病，水主肾，水去克火肾虚，也主肾病，还主妇女病。',
   },
 ];
 
-/** 看吉日（PDF 第 6 页） */
+/** 看吉日（底本第 6 页） */
 export const SIX_LUCKY_DAY_RULES: ReadonlyArray<string> = [
-  '结婚、上梁的日子与时辰宜选大安、速喜。',
-  '买卖开业的日子与时辰宜选速喜、小吉。',
-  '出行的时辰宜选小吉、留连。',
-  '动土、下葬的时辰宜选大安。',
-  '看吉日起课：从大安起课，大安起月，月上起日，日上起时。',
+  '结婚、上梁的日子和时辰应选在大安和速喜为吉利。',
+  '买卖开业的日子和时辰应选在速喜和小吉为吉利。',
+  '出行的时辰应在小吉和留连为吉利。',
+  '动土、下葬的时辰应在大安为吉利。',
+  '看吉日起课：看日子从大安开始起课，大安起月，月上起日，日上起时辰。',
 ];
 
 /* ------------------------------------------------------------------ */
@@ -191,6 +266,8 @@ export interface SixInterpretationContext {
   inputSummary: string;
   /** 起宫依据，例如「婚姻杂事（官喜宫·大安）」 */
   originLabel: string;
+  /** 起宫依据的事由 id（general / 占人传 null，无歌诀） */
+  topicId?: SixTopicId | null;
   /** 自报三数时的数字释义（可选） */
   numberNotes?: readonly string[];
 }
@@ -205,10 +282,12 @@ export interface SixInterpretation {
   advice: string[];
   keywords: string[];
   tone: OverallTone;
-  /** 六宫特有：逐步断词（PDF 原诗） */
+  /** 六宫特有：逐步断词（底本原诗，含标点） */
   verses: Array<{ step: string; stepLabel: string; palaceName: string; lines: readonly string[] }>;
-  /** 六宫特有：用神生克提示 */
-  relationNote: string;
+  /** 六宫特有：断课歌诀（仅五个事由有；通用问事与占人为空） */
+  topicVerses: Array<{ step: string; stepLabel: string; palaceName: string; verse: string }>;
+  /** 六宫特有：用神取法与喜忌断语 */
+  yongshen: SixYongshen;
   /** 六宫特有：三宫五行同类提示（未命中为空） */
   sameElementNote: string;
   /** 六宫特有：自报三数的数字释义 */
@@ -224,7 +303,7 @@ const ROLE_BY_STEP = {
   hour: '结果 / 子孙财物',
 } as const;
 
-function omenWord(omen: PalaceOmen): string {
+function omenWord(omen: 'auspicious' | 'mixed' | 'inauspicious'): string {
   if (omen === 'auspicious') return '偏吉';
   if (omen === 'inauspicious') return '偏滞';
   return '中平';
@@ -244,6 +323,8 @@ export function sixComposeInterpretation(
   result: SixResult,
   context: SixInterpretationContext,
 ): SixInterpretation {
+  const topicId = context.topicId ?? null;
+
   const readings: StepReading[] = result.steps.map((step) => {
     const meta = getSixPalaceMeta(step.resultIndex);
     const startMeta = getSixPalaceMeta(step.startIndex);
@@ -254,8 +335,7 @@ export function sixComposeInterpretation(
         : step.step === 'day'
           ? meaning.asDay
           : meaning.asHour;
-    // StepReading 复用九宫类型：六宫名均在九宫名集合内，故类型天然兼容
-    const palaceName = meta.name as PalaceName;
+    const palaceName = meta.name;
     return {
       step: step.step,
       stepLabel: STEP_LABELS[step.step],
@@ -267,7 +347,7 @@ export function sixComposeInterpretation(
       order: meta.order,
       omen: meta.omen,
       positionalText,
-      text: `${STEP_LABELS[step.step]}位 · 以${startMeta.name}起数 ${step.inputNumber} 次，落${meta.name}（第 ${meta.order} 位）：${meaning.summary}`,
+      text: `${STEP_LABELS[step.step]}位（${ROLE_BY_STEP[step.step]}）落${meta.name}——${meaning.summary}`,
       pathNames: step.pathIndices.map((i) => SIX_PALACE_META[i].name),
     } satisfies StepReading;
   });
@@ -277,13 +357,28 @@ export function sixComposeInterpretation(
   const hourMeta = getSixPalaceMeta(readings[2].palaceIndex);
 
   const omens = readings.map((reading) => reading.omen);
-  const ausAuspicious = omens.filter((omen) => omen === 'auspicious').length;
-  const inauspicious = omens.filter((omen) => omen === 'inauspicious').length;
+  const auspiciousCount = omens.filter((omen) => omen === 'auspicious').length;
+  const inauspiciousCount = omens.filter((omen) => omen === 'inauspicious').length;
   const tone: OverallTone =
-    ausAuspicious >= 2 ? 'auspicious' : inauspicious >= 2 ? 'inauspicious' : 'mixed';
+    auspiciousCount >= 2 ? 'auspicious' : inauspiciousCount >= 2 ? 'inauspicious' : 'mixed';
 
-  const relation = sixElementRelation(dayMeta.element, hourMeta.element);
-  const relationNote = `${RELATION_TEXT[relation]}（日宫${dayMeta.name}属${dayMeta.element}，时宫${hourMeta.name}属${hourMeta.element}）`;
+  // 用神（底本：占事以宫位取用神；通用 / 占人以日宫为用神）
+  const yongshenIndex = sixResolveYongshenIndex(topicId, dayMeta.index);
+  const yongshenMeta = getSixPalaceMeta(yongshenIndex);
+  const yongshenBasis =
+    topicId && topicId !== 'general'
+      ? `占${getSixTopic(topicId).label}，以宫位取用神：${getSixTopic(topicId).origin}为用神。`
+      : '通用问事 / 占人起课无指定宫位，以日宫（自身）为用神。';
+  const yongshen: SixYongshen = {
+    palaceName: yongshenMeta.name,
+    palaceIndex: yongshenIndex,
+    basis: yongshenBasis,
+    notes: buildYongshenNotes(yongshenIndex, [
+      { step: 'month', index: monthMeta.index },
+      { step: 'day', index: dayMeta.index },
+      { step: 'hour', index: hourMeta.index },
+    ]),
+  };
 
   const sameElementNote =
     monthMeta.element === dayMeta.element && dayMeta.element === hourMeta.element
@@ -299,12 +394,11 @@ export function sixComposeInterpretation(
 
   const combination = [
     sameElementNote,
-    relationNote,
-    ausAuspicious === 3
+    auspiciousCount === 3
       ? '三宫皆吉：起因、自身与收束都在吉位，本局底色顺遂，更该留意别把顺遂当成必然。'
-      : inauspicious === 3
+      : inauspiciousCount === 3
         ? '三宫皆滞：起因、自身与收束都落在滞位，本局不宜强求，宜静守休整。'
-        : `三宫吉位 ${ausAuspicious} 处、滞位 ${inauspicious} 处，走势取决于投入的节奏与分寸。`,
+        : `三宫吉位 ${auspiciousCount} 处、滞位 ${inauspiciousCount} 处，走势取决于投入的节奏与分寸。`,
   ]
     .filter(Boolean)
     .join('');
@@ -312,7 +406,7 @@ export function sixComposeInterpretation(
   const positives: string[] = [];
   readings.forEach((reading) => {
     if (reading.omen === 'auspicious') {
-      positives.push(`${reading.stepLabel}位${reading.palaceName}：${reading.positionalText}`);
+      positives.push(`${reading.stepLabel}位${reading.palaceName}：${SIX_PALACE_READINGS[reading.palaceName as SixPalaceName].summary}`);
     }
   });
   if (positives.length === 0) {
@@ -323,15 +417,9 @@ export function sixComposeInterpretation(
   readings.forEach((reading) => {
     if (reading.omen === 'inauspicious') {
       const meaning = SIX_PALACE_READINGS[reading.palaceName as SixPalaceName];
-      cautions.push(`${reading.stepLabel}位${reading.palaceName}：${reading.positionalText}${meaning.cautions[0] ?? ''}`);
+      cautions.push(`${reading.stepLabel}位${reading.palaceName}：${meaning.cautions[0] ?? ''}`);
     }
   });
-  if (readings.some((reading) => reading.palaceName === '空亡')) {
-    cautions.push('空亡之位提示预期可能落空：涉及资金与承诺的事项宜留出退路。');
-  }
-  if (readings.some((reading) => reading.palaceName === '赤口')) {
-    cautions.push('赤口之位提示言语与约定的风险：重要沟通宜留痕、书面确认。');
-  }
   if (cautions.length === 0) {
     cautions.push('吉位之中仍需留意节奏：顺遂时最容易松懈，把关键细节再核一遍更稳。');
   }
@@ -353,6 +441,20 @@ export function sixComposeInterpretation(
     lines: getSixPalaceMeta(reading.palaceIndex).verse,
   }));
 
+  // 断课歌诀：五个事由才有（底本第 6~7 页）；通用问事与占人为空
+  const topicVerses: SixInterpretation['topicVerses'] = [];
+  readings.forEach((reading) => {
+    const verse = getSixTopicVerse(topicId, reading.palaceName as SixPalaceName);
+    if (verse) {
+      topicVerses.push({
+        step: reading.step,
+        stepLabel: reading.stepLabel,
+        palaceName: reading.palaceName,
+        verse,
+      });
+    }
+  });
+
   const numbersText = `${result.input.month}、${result.input.day}、${result.input.hour}`;
   const headline = `收束在${hourMeta.name} · ${tone === 'auspicious' ? '结局偏吉' : tone === 'inauspicious' ? '宜缓宜守' : '得失并存'}`;
 
@@ -371,6 +473,17 @@ export function sixComposeInterpretation(
     '【逐步解析】',
     ...readings.map((reading) => `· ${reading.role}：${reading.text}`),
     ...verses.map((verse) => `· ${verse.stepLabel}位${verse.palaceName}断词：${verse.lines.join('')}`),
+    ...(topicVerses.length > 0
+      ? [
+          '',
+          '【断课歌诀】',
+          ...topicVerses.map((verse) => `· ${verse.stepLabel}位${verse.palaceName}：${verse.verse}`),
+        ]
+      : []),
+    '',
+    '【用神喜忌】',
+    `· ${yongshen.basis}`,
+    ...yongshen.notes.map((note) => `· ${note}`),
     '',
     '【积极因素】',
     ...positives.map((item) => `· ${item}`),
@@ -395,26 +508,20 @@ export function sixComposeInterpretation(
     keywords,
     tone,
     verses,
-    relationNote,
+    topicVerses,
+    yongshen,
     sameElementNote,
     numberNotes: [...(context.numberNotes ?? [])],
-    disclaimer: INTERPRETATION_DISCLAIMER,
-    privacy: PRIVACY_NOTICE,
+    disclaimer: SIX_INTERPRETATION_DISCLAIMER,
+    privacy: SIX_PRIVACY_NOTICE,
     shareText,
   };
 }
 
 /** 事由清单（供表单与规则说明复用） */
-export const SIX_TOPIC_LIST = SIX_TOPICS;
+export { SIX_TOPICS as SIX_TOPIC_LIST } from './sixConstants';
 
-/** 九宫释义模块也导出这两段合规文案，这里重新导出便于六宫视图独立引用 */
-export { INTERPRETATION_DISCLAIMER, PRIVACY_NOTICE };
-
-/** 依据索引取宫位展示名（含别称提示），供卡片副标题使用 */
-export function sixPalaceCaption(index: number): string {
-  const meta = getSixPalaceMeta(index);
-  return `${meta.name}（${meta.guardian}·${meta.element}·${meta.direction}）`;
+/** 六神象义快捷取用（底本第 3 页） */
+export function sixGuardianNote(guardian: string): string {
+  return SIX_GUARDIAN_MEANINGS[guardian] ?? '';
 }
-
-/** 与九宫一致的宫位元数据取用（避免视图层直接依赖 divination 常量） */
-export { getPalaceMeta };

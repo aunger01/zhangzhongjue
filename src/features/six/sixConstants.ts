@@ -53,18 +53,19 @@ export const SIX_PALACE_META: readonly SixPalaceMeta[] = [
     name: '大安',
     finger: 'index',
     segment: 'proximal',
-    brief: '身不动时，安稳守成',
+    brief: '身不动：一切静止不动、平安',
     omen: 'auspicious',
     element: '木',
     direction: '东方',
     guardian: '青龙',
     guardianNote: '青龙表示吉祥',
     days: '一、四、七日',
+    // 断词四句（转录底本第 2 页，逐字照录；标点按底本补齐，拼接后即成完整句）
     verse: [
-      '大安事事昌，求财在坤方',
-      '失物去不远，宅舍保平安',
-      '行人身未动，病者身无妨',
-      '将军回田野，仔细更推详',
+      '大安事事昌，求财在坤方；',
+      '失物去不远，宅舍保平安；',
+      '行人身未动，病者身无妨；',
+      '将军回田野，仔细更推详。',
     ],
     keywords: ['安稳', '守成', '不动', '旧处'],
   },
@@ -75,7 +76,7 @@ export const SIX_PALACE_META: readonly SixPalaceMeta[] = [
     name: '留连',
     finger: 'index',
     segment: 'distal',
-    brief: '卒未归时，迟滞未决',
+    brief: '卒未归：时机未到、凡事暂缓',
     omen: 'inauspicious',
     element: '水',
     direction: '北方',
@@ -83,10 +84,10 @@ export const SIX_PALACE_META: readonly SixPalaceMeta[] = [
     guardianNote: '玄武表示盗贼',
     days: '二、五、八日',
     verse: [
-      '留连事难成，求谋日未明',
-      '官事只宜缓，去者未回程',
-      '失物南方见，急讨方称心',
-      '更须防口舌，人口且平平',
+      '留连事难成，求谋日未明；',
+      '官事只宜缓，去者未回程；',
+      '失物南方见，急讨方称心；',
+      '更须防口舌，人口且平平。',
     ],
     keywords: ['迟滞', '未明', '拖延', '防口舌'],
   },
@@ -97,7 +98,7 @@ export const SIX_PALACE_META: readonly SixPalaceMeta[] = [
     name: '速喜',
     finger: 'middle',
     segment: 'distal',
-    brief: '人即至时，喜信速来',
+    brief: '人便至：时机已到、速办成功',
     omen: 'auspicious',
     element: '火',
     direction: '南方',
@@ -105,10 +106,10 @@ export const SIX_PALACE_META: readonly SixPalaceMeta[] = [
     guardianNote: '朱雀表示悦吉',
     days: '三、六、九日',
     verse: [
-      '速喜喜来临，求财向南行',
-      '失物申未午，逢人路上寻',
-      '官事有福德，病者无祸侵',
-      '田宅六畜吉，行人有信音',
+      '速喜喜来临，求财向南行；',
+      '失物申未午，逢人路上寻；',
+      '官事有福德，病者无祸侵；',
+      '田宅六畜吉，行人有信音。',
     ],
     keywords: ['喜信', '速至', '应期近', '福德'],
   },
@@ -119,7 +120,7 @@ export const SIX_PALACE_META: readonly SixPalaceMeta[] = [
     name: '赤口',
     finger: 'ring',
     segment: 'distal',
-    brief: '官事凶时，口舌是非',
+    brief: '官事凶：口舌是非、办事宜缓',
     omen: 'inauspicious',
     element: '金',
     direction: '西方',
@@ -127,10 +128,10 @@ export const SIX_PALACE_META: readonly SixPalaceMeta[] = [
     guardianNote: '白虎表示凶险',
     days: '四、七、十日',
     verse: [
-      '赤口主口舌，官非切要防',
-      '失物速速讨，行人有惊惶',
-      '鸡猴多做怪，病者出西方',
-      '更需防咒咀，诫恐染瘟殃',
+      '赤口主口舌，官非切要防；',
+      '失物速速讨，行人有惊惶；',
+      '鸡猴多做怪，病者出西方；',
+      '更需防咒咀，诫恐染瘟殃。',
     ],
     keywords: ['口舌', '官非', '争竞', '慎言'],
   },
@@ -141,7 +142,7 @@ export const SIX_PALACE_META: readonly SixPalaceMeta[] = [
     name: '小吉',
     finger: 'ring',
     segment: 'proximal',
-    brief: '人来喜时，和合小成',
+    brief: '人来喜：喜事到来、成功在望',
     omen: 'auspicious',
     element: '木',
     direction: '东方',
@@ -149,10 +150,10 @@ export const SIX_PALACE_META: readonly SixPalaceMeta[] = [
     guardianNote: '六合表示和合',
     days: '一、四、七日',
     verse: [
-      '小吉最吉昌，路上好商量',
-      '阴人来报喜，失物在坤方',
-      '行人即便至，交易甚是强',
-      '凡事皆和合，病者祈上苍',
+      '小吉最吉昌，路上好商量；',
+      '阴人来报喜，失物在坤方；',
+      '行人即便至，交易甚是强；',
+      '凡事皆和合，病者祈上苍。',
     ],
     keywords: ['和合', '小成', '商量', '人来'],
   },
@@ -163,7 +164,7 @@ export const SIX_PALACE_META: readonly SixPalaceMeta[] = [
     name: '空亡',
     finger: 'middle',
     segment: 'proximal',
-    brief: '信音稀时，谋事落空',
+    brief: '信音稀：查无音信、办事无成',
     omen: 'inauspicious',
     element: '土',
     direction: '中央',
@@ -171,10 +172,10 @@ export const SIX_PALACE_META: readonly SixPalaceMeta[] = [
     guardianNote: '勾陈表示官讼',
     days: '三、六、九日',
     verse: [
-      '空亡事不祥，阴人少乖张',
-      '求财无利益，行人有灾殃',
-      '失物寻不见，官事有刑伤',
-      '病人逢暗鬼，祈解保安康',
+      '空亡事不祥，阴人少乖张；',
+      '求财无利益，行人有灾殃；',
+      '失物寻不见，官事有刑伤；',
+      '病人逢暗鬼，祈解保安康。',
     ],
     keywords: ['落空', '信稀', '虚耗', '宜缓'],
   },
@@ -261,7 +262,7 @@ export const SIX_TOPICS: readonly SixTopic[] = [
     origin: '速喜',
     palaceLabel: '寿宫',
     verse: '疾厄病苦到寿宫，位置在速喜',
-    note: '问疾病从福寿宫起课，福寿宫落在速喜。',
+    note: '问疾病从福寿宫起课，福寿宫落在速喜（歌诀称寿宫）。',
   },
   {
     id: 'lawsuit',
@@ -285,6 +286,77 @@ export function getSixTopic(id: SixTopicId): SixTopic {
   const topic = SIX_TOPICS.find((item) => item.id === id);
   if (!topic) throw new Error(`未知事由：${String(id)}`);
   return topic;
+}
+
+/* ------------------------------------------------------------------ */
+/* 断课歌诀：分事由 × 分宫（转录底本第 6~7 页「歌诀」）                   */
+/* ------------------------------------------------------------------ */
+
+/** 有断课歌诀的五个事由（通用问事与占人无歌诀，用断词断课） */
+export type SixVerseTopicId = 'marriage' | 'wealth' | 'illness' | 'lawsuit' | 'travel';
+
+/**
+ * 断课歌诀：问某事落某宫的原文断语（转录底本第 6~7 页，逐字照录）。
+ * 例如「财占速喜九分财，若要得全贵人帮」——问求财落速喜即引此句。
+ */
+export const SIX_TOPIC_VERSES: Readonly<
+  Record<SixVerseTopicId, Readonly<Record<SixPalaceName, string>>>
+> = {
+  marriage: {
+    大安: '婚占大安婚自安，青梅竹马结良缘',
+    留连: '婚占留连有犹豫，男女两家都不欢',
+    速喜: '婚占速喜喜喜喜，一见钟情成一家',
+    赤口: '婚占赤口婚不吉，棒打鸳鸯各一方',
+    小吉: '婚占小吉桃花婚，男的潇洒女风光',
+    空亡: '婚占空亡喜无音，单身男女泪汪汪',
+  },
+  wealth: {
+    大安: '财占大安不动财，动则钱财有损伤',
+    留连: '财占留连为无财，真想求财去远方',
+    速喜: '财占速喜九分财，若要得全贵人帮',
+    赤口: '财占赤口一口财，辛辛苦苦才能赚到',
+    小吉: '财占小吉流动财，即有去的也有来',
+    空亡: '财占空亡意外财，要逢天时好运帮',
+  },
+  illness: {
+    大安: '病占大安不用慌，上天佑你保健康',
+    留连: '病占留连多忧愁，缠绵缠缠病不离',
+    速喜: '病占速喜病来急，急速医治别务期',
+    赤口: '病占赤口是重衰，忍受痛苦度病关',
+    小吉: '病占小吉为吉利，不用慌忙病有安',
+    空亡: '病占空亡为无病，有病可能是癔病',
+  },
+  lawsuit: {
+    大安: '官司大安是不顺，要找贵人来疏通',
+    留连: '官司留连有拖延，耐心等待不要忙',
+    速喜: '官司速喜有明理，是黑是白自分明',
+    赤口: '官司赤口是不顺，官司输定必不疑',
+    小吉: '官司小吉要答礼，舍财保身得平安',
+    空亡: '官司空亡无灾难，虚惊一场不要慌',
+  },
+  travel: {
+    大安: '大安外出不宜远，不求财来可以走',
+    留连: '留连外出是远行，忧心忡忡有拖延',
+    速喜: '速喜外出走的慌，匆匆忙忙来观光',
+    赤口: '赤口外出有凶险，按兵不动是真招',
+    小吉: '小吉外出最顺当，一路观光一路戏',
+    空亡: '空亡外出最不欢，有失无中不乐观',
+  },
+};
+
+/** 歌诀事由的题头名（转录底本用「婚占 / 财占 / 病占 / 官司 / 外出」） */
+export const SIX_VERSE_TOPIC_LABELS: Readonly<Record<SixVerseTopicId, string>> = {
+  marriage: '婚占',
+  wealth: '财占',
+  illness: '病占',
+  lawsuit: '官司',
+  travel: '外出',
+};
+
+/** 依事由与落宫取断课歌诀；无歌诀的事由返回 null */
+export function getSixTopicVerse(topicId: SixTopicId | null, palaceName: SixPalaceName): string | null {
+  if (!topicId || !(topicId in SIX_TOPIC_VERSES)) return null;
+  return SIX_TOPIC_VERSES[topicId as SixVerseTopicId][palaceName];
 }
 
 /** 占人起课：女起重阴、男起重阳（PDF 第 5 页） */

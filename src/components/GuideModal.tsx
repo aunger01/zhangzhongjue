@@ -35,12 +35,21 @@ import {
   SIX_ODD_NUMBERS,
   SIX_PALACE_CYCLE_TEXT,
   SIX_PALACE_META,
+  SIX_PALACES,
   SIX_PERSON_ORIGIN,
   SIX_STEP_SUBJECT,
   SIX_TOPICS,
+  SIX_TOPIC_VERSES,
   SIX_UNLUCKY_NUMBERS,
+  SIX_VERSE_TOPIC_LABELS,
+  type SixVerseTopicId,
 } from '../features/six/sixConstants';
-import { SIX_ELEMENT_CASES, SIX_LUCKY_DAY_RULES } from '../features/six/sixMeanings';
+import {
+  SIX_ELEMENT_CASES,
+  SIX_INTERPRETATION_DISCLAIMER,
+  SIX_LUCKY_DAY_RULES,
+  SIX_PRIVACY_NOTICE,
+} from '../features/six/sixMeanings';
 import { Modal } from './Modal';
 import './GuideModal.css';
 
@@ -443,21 +452,57 @@ resultIndex = (startIndex + count - 1) % 6`}</pre>
       </section>
 
       <section>
-        <h3>六、月、日、时三级取象</h3>
+        <h3>六、月、日、时三级取象与用神</h3>
         <ul>
-          <li>月份（父母、长辈、上级、领导、官员）：{SIX_STEP_SUBJECT.month}。</li>
-          <li>日子（自身、妻妾、亲属、家内）：{SIX_STEP_SUBJECT.day}。</li>
-          <li>时辰（子孙、晚辈、下级、物品、六畜、财产、方位）：{SIX_STEP_SUBJECT.hour}。</li>
+          <li>月份：{SIX_STEP_SUBJECT.month}。</li>
+          <li>日子：{SIX_STEP_SUBJECT.day}。</li>
+          <li>时辰：{SIX_STEP_SUBJECT.hour}。</li>
         </ul>
+        <p>
+          <strong>取用神</strong>：占事以宫位取用神——占婚姻以大安、求财以留连、疾病以速喜、官司以赤口、
+          出行以小吉为用神；通用问事与占人起课无指定宫位，以日宫（自身）为用神。
+        </p>
+        <p>
+          <strong>用神喜忌</strong>：用神与吉神相冲克，主吉事不吉，办事无成，喜事成空；与凶神相冲克，
+          主凶事不凶，凶中有吉，化险为夷；与吉神相生，主吉事更吉，喜上加喜；与凶神相生，主凶事更凶，雪上加霜；
+          用神受冲克或逢空亡，主事情虚假，吉凶变动不定。
+        </p>
         <p className="faint">
-          用神先取日宫（占事亦可依宫位取用：占婚姻取大安、求财取留连、占病取速喜、占官取赤口、占行取小吉）。
-          用神与吉神相冲克则吉事不吉；与凶神相冲克则凶中有吉；与吉神相生则吉上加吉；与凶神相生则凶上加凶。
-          本站以日宫五行与时辰宫五行作生克提示，不作确定性断言。
+          本站按课内其余宫位的五行逐一与用神比对生克，给出喜忌提示；不作确定性断言。
         </p>
       </section>
 
       <section>
-        <h3>七、五行取事与看吉日</h3>
+        <h3>七、断课歌诀（分事由）</h3>
+        <p className="faint">
+          问明事由时，落宫另有专门断语，直接依歌诀断课，再与断词互为参证。
+        </p>
+        <div className="guide__table-wrap">
+          <table className="guide__table">
+            <thead>
+              <tr>
+                <th scope="col">事由</th>
+                <th scope="col">落宫</th>
+                <th scope="col">歌诀</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(Object.keys(SIX_TOPIC_VERSES) as SixVerseTopicId[]).map((topicId) =>
+                SIX_PALACES.map((palace) => (
+                  <tr key={`${topicId}-${palace}`}>
+                    <td>{SIX_VERSE_TOPIC_LABELS[topicId]}</td>
+                    <td className="guide__palace">{palace}</td>
+                    <td className="faint">{SIX_TOPIC_VERSES[topicId][palace]}</td>
+                  </tr>
+                )),
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h3>八、五行取事与看吉日</h3>
         <ul>
           {SIX_ELEMENT_CASES.map((item) => (
             <li key={item.title}>
@@ -477,9 +522,9 @@ resultIndex = (startIndex + count - 1) % 6`}</pre>
       </section>
 
       <section>
-        <h3>八、限制、隐私与用途</h3>
-        <p>{INTERPRETATION_DISCLAIMER}</p>
-        <p>{PRIVACY_NOTICE}</p>
+        <h3>九、限制、隐私与用途</h3>
+        <p>{SIX_INTERPRETATION_DISCLAIMER}</p>
+        <p>{SIX_PRIVACY_NOTICE}</p>
         <p className="faint">
           六宫的起课、断词与歌诀依《小六壬精华》整理；掌图与算法分离，改插画不会改变任何计算结果。
           本站为纯前端站点：所有计算、换算与解读都在你的浏览器内完成。
