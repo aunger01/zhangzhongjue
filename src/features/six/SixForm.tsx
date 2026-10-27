@@ -60,8 +60,6 @@ interface ResolvedBasis {
   /** 事由 id（占人 / 自定义为 null） */
   topicId: SixTopicId | null;
   label: string;
-  verse: string;
-  note: string;
   palaceLabel: string;
 }
 
@@ -74,8 +72,6 @@ function resolveBasis(value: BasisValue): ResolvedBasis {
       originName: config.origin,
       topicId: null,
       label: `占人（${gender === 'male' ? '男' : '女'}）· ${config.origin}起课`,
-      verse: gender === 'male' ? '男起重阳，小吉是重阳，故男起小吉' : '女起重阴，留连是重阴，故女起留连',
-      note: config.note,
       palaceLabel: gender === 'male' ? '重阳' : '重阴',
     };
   }
@@ -86,8 +82,6 @@ function resolveBasis(value: BasisValue): ResolvedBasis {
     originName: topic.origin,
     topicId: topic.id,
     label: `${topic.label}（${topic.palaceLabel}·${topic.origin}）`,
-    verse: topic.verse,
-    note: topic.note,
     palaceLabel: topic.palaceLabel,
   };
 }
@@ -182,37 +176,28 @@ export function SixForm({ onSubmit }: SixFormProps) {
         <span className="badge badge--gold">传统起课法 · 模 6</span>
       </div>
 
-      <p className="faint six-form__lead">
-        六宫只用六个宫位：大安、留连、速喜、赤口、小吉、空亡。
-        <strong>起宫不固定</strong>——依事由（起课歌诀）或占人（女起留连、男起小吉）决定；空亡不起课，只作落宫。
-      </p>
-
       {/* ---------- 一、起宫依据 ---------- */}
       <label className="field">
-        <span className="field__label">起宫依据（决定从哪一宫起数）</span>
+        <span className="field__label">依事由起课</span>
         <select
           className="select"
           value={basis}
           onChange={(event) => setBasis(event.target.value as BasisValue)}
           data-testid="six-basis"
         >
-          <optgroup label="依事由起课（起课歌诀）">
+          <optgroup label="依事由起课">
             {SIX_TOPICS.map((topic) => (
               <option key={topic.id} value={`topic:${topic.id}`}>
-                {topic.label} · {topic.palaceLabel}（{topic.origin}起）
+                {topic.label}
               </option>
             ))}
           </optgroup>
-          <optgroup label="依占人起课（女重阴 / 男重阳）">
-            <option value="person:female">占人（女）· 留连起</option>
-            <option value="person:male">占人（男）· 小吉起</option>
+          <optgroup label="依问占之人起课">
+            <option value="person:female">问占之人（女）</option>
+            <option value="person:male">问占之人（男）</option>
           </optgroup>
         </select>
       </label>
-
-      <p className="six-form__verse" data-testid="six-basis-verse">
-        「{resolved.verse}」<span className="faint">　{resolved.note}</span>
-      </p>
 
       {/* ---------- 二、取数方式 ---------- */}
       <div className="six-form__source">
@@ -373,7 +358,6 @@ export function SixForm({ onSubmit }: SixFormProps) {
 
       <p className="faint six-form__note">
         断课提示：{SIX_STEP_SUBJECT.month}为月位，{SIX_STEP_SUBJECT.day}为日位，{SIX_STEP_SUBJECT.hour}为时位。
-        本页只作传统文化体验与自我省思，不构成任何专业建议。
       </p>
     </form>
   );

@@ -224,7 +224,18 @@ describe('六宫小六壬（传统六宫法）', () => {
     expect(container.querySelector('[data-testid="six-basis"]')).toBeTruthy();
     // 品牌副标题随宫制切换
     expect(container.textContent).toContain('六宫小六壬');
-    expect(q('six-basis-verse').textContent).toContain('以大安作为正月');
+    // 下拉选项已精简：只留事由名，不带宫位后缀
+    const basisSelect = q('six-basis');
+    const optionTexts = Array.from(basisSelect.querySelectorAll('option')).map((o) => o.textContent ?? '');
+    expect(optionTexts).toContain('通用问事');
+    expect(optionTexts).toContain('婚姻杂事');
+    expect(optionTexts).toContain('求财经商');
+    expect(optionTexts).toContain('问占之人（女）');
+    expect(optionTexts).toContain('问占之人（男）');
+    expect(optionTexts.every((text) => !text.includes('起）'))).toBe(true);
+    const groupLabels = Array.from(basisSelect.querySelectorAll('optgroup')).map((g) => g.getAttribute('label'));
+    expect(groupLabels).toContain('依事由起课');
+    expect(groupLabels).toContain('依问占之人起课');
   });
 
   it('🔴 占人女例：留连起课，三月初三卯时 → 赤口 / 空亡 / 速喜（与原文一致）', async () => {
@@ -235,7 +246,8 @@ describe('六宫小六壬（传统六宫法）', () => {
     }
 
     await selectOption('six-basis', 'person:female');
-    expect(q('six-basis-verse').textContent).toContain('女起重阴');
+    // 起课歌诀行已删除，起宫信息只在预览区呈现
+    expect(container.querySelector('[data-testid="six-basis-verse"]')).toBeNull();
 
     // 取数方式：农历月日时
     await click('six-source-calendar');
@@ -319,7 +331,7 @@ describe('六宫小六壬（传统六宫法）', () => {
       await flush(2);
     }
     await selectOption('six-basis', 'topic:wealth');
-    expect(q('six-basis-verse').textContent).toContain('财帛宫');
+    expect(q('six-preview').textContent).toContain('留连');
 
     await selectOption('six-month', '3');
     await selectOption('six-day', '3');
