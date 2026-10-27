@@ -1,0 +1,7 @@
+/* 六宫演算界面：仅补偿六宫特有的少量排版 */
+
+.six-session .session__readout .session__brief {
+  margin: 6px 0 0;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+}

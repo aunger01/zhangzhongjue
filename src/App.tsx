@@ -1,11 +1,13 @@
 /**
  * 掌中诀 · 应用外壳
  *
- * 负责视图切换与"演算会话"的编排：
- *   HOME → INPUT（生辰 / 文字）→ READY → ANIMATING ⇄ PAUSED
- *                                       → STEP_COMPLETE → FINAL_RESULT（结果页）
+ * 负责视图切换与"演算会话"的编排。两条玩法线并存、互不干扰：
  *
- * 提交输入后直接进入掐指演算（原「起数预览」步骤已取消，流程更顺畅）。
+ *   九宫线：HOME → INPUT（生辰 / 文字）→ READY → ANIMATING ⇄ PAUSED
+ *                                        → STEP_COMPLETE → FINAL_RESULT（结果页）
+ *   六宫线：SIX_FORM → SIX_SESSION（同一套状态机）→ SIX_RESULT
+ *
+ * 两条线各持一台状态机、各自冻结结果；宫制由右上角入口切换。
  * 演算开始后本次结果对象被冻结，所有控件只改变"观看方式"。
  */
 
@@ -18,6 +20,12 @@ import { GuideModal } from './components/GuideModal';
 import { HistoryDrawer } from './components/HistoryDrawer';
 import type { BirthSubmission } from './features/birth/BirthForm';
 import { TextForm, type TextSubmission } from './features/text/TextForm';
+import type { SixSubmission } from './features/six/SixForm';
+import { SixSessionView } from './features/six/SixSessionView';
+import { SixResultPage } from './features/six/SixResultPage';
+import { createSixResult, type SixResult } from './features/six/sixCalculate';
+import { sixComposeInterpretation } from './features/six/sixMeanings';
+import { SIX_PALACES } from './features/six/sixConstants';
 import { SHICHEN } from './features/birth/timeMapping';
 import { createDivinationResult } from './features/divination/calculate';
 import { PALACES } from './features/divination/palaceConstants';
@@ -37,13 +45,20 @@ import type { CalendarInfo, DivinationMode } from './features/divination/types';
 import type { StrokeNumberingDetail } from './features/text/strokeNumbering';
 import './App.css';
 
-type View = 'home' | 'birth' | 'text' | 'session' | 'result';
+type View = 'home' | 'birth' | 'text' | 'session' | 'result' | 'six-form' | 'six-session' | 'six-result';
+
+type PalaceMode = 'nine' | 'six';
 
 /**
- * 生辰起卦需要历法库，体量较大：按需加载，让首页与心念起卦保持轻量。
+ * 生辰起卦需要历法库，六宫表单同样需要农历换算：均按需加载，
+ * 让首页与心念起卦保持轻量。
  */
 const BirthForm = lazy(() =>
   import('./features/birth/BirthForm').then((module) => ({ default: module.BirthForm })),
+);
+
+const SixForm = lazy(() =>
+  import('./features/six/SixForm').then((module) => ({ default: module.SixForm })),
 );
 
 interface PendingInput {
@@ -58,14 +73,18 @@ interface PendingInput {
 export default function App() {
   const prefersReducedMotion = usePrefersReducedMotion();
   const machine = useDivinationMachine({ reducedMotion: prefersReducedMotion });
+  const sixMachine = useDivinationMachine({ reducedMotion: prefersReducedMotion });
   const { state: machineState, actions } = machine;
+  const { state: sixState, actions: sixActions } = sixMachine;
 
   const [view, setView] = useState<View>('home');
+  const [palaceMode, setPalaceMode] = useState<PalaceMode>('nine');
   const [pending, setPending] = useState<PendingInput | null>(null);
-  const [guide, setGuide] = useState<{ open: boolean; variant: 'play' | 'rules' }>({
-    open: false,
-    variant: 'play',
-  });
+  const [sixPending, setSixPending] = useState<SixSubmission | null>(null);
+  const [guide, setGuide] = useState<{
+    open: boolean;
+    variant: 'play' | 'rules' | 'six-play' | 'six-rules';
+  }>({ open: false, variant: 'play' });
   const [historyOpen, setHistoryOpen] = useState(false);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
 
@@ -81,8 +100,13 @@ export default function App() {
   }, []);
 
   const result = machineState.result;
+  /**
+   * 六宫状态机只装载 SixResult（算法层保证），此处收窄类型；
+   * 状态机本身对宫制无感知，只看 steps.pathIndices。
+   */
+  const sixResult = sixState.result as SixResult | null;
 
-  /* ---------- 进入结果页：切换视图并记录一条本地历史 ---------- */
+  /* ---------- 九宫线：进入结果页 ---------- */
   const recordedRef = useRef<number | null>(null);
   useEffect(() => {
     if (machineState.phase !== 'FINAL_RESULT' || !result || !pending) return;
@@ -107,7 +131,32 @@ export default function App() {
     setHistory(appendHistory(entry));
   }, [machineState.phase, result, pending]);
 
-  /* ---------- 输入提交：直接进入掐指演算（不再经「起数预览」页） ---------- */
+  /* ---------- 六宫线：进入结果页 ---------- */
+  const sixRecordedRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (sixState.phase !== 'FINAL_RESULT' || !sixResult || !sixPending) return;
+    setView('six-result');
+    if (sixRecordedRef.current === sixResult.createdAt) return;
+    sixRecordedRef.current = sixResult.createdAt;
+    soundEngine.play('complete');
+    const entry: HistoryEntry = {
+      id: createHistoryId(sixResult.createdAt),
+      createdAt: sixResult.createdAt,
+      mode: 'six',
+      inputSummary: `${sixPending.originLabel} ｜ ${sixPending.numbersNote}`,
+      numbersText: `${sixResult.input.month}、${sixResult.input.day}、${sixResult.input.hour}`,
+      palaces: [
+        SIX_PALACES[sixResult.steps[0].resultIndex],
+        SIX_PALACES[sixResult.steps[1].resultIndex],
+        SIX_PALACES[sixResult.steps[2].resultIndex],
+      ],
+      algorithmId: sixResult.input.algorithmId,
+      algorithmVersion: sixResult.input.algorithmVersion,
+    };
+    setHistory(appendHistory(entry));
+  }, [sixState.phase, sixResult, sixPending]);
+
+  /* ---------- 九宫线：输入提交 ---------- */
   const handleBirthSubmit = useCallback(
     (submission: BirthSubmission) => {
       const created = createDivinationResult({
@@ -140,27 +189,76 @@ export default function App() {
     [actions],
   );
 
+  /* ---------- 六宫线：输入提交 ---------- */
+  const handleSixSubmit = useCallback(
+    (submission: SixSubmission) => {
+      const created = createSixResult({
+        originIndex: submission.originIndex,
+        originLabel: submission.originLabel,
+        month: submission.month,
+        day: submission.day,
+        hour: submission.hour,
+        numbersNote: submission.numbersNote,
+        numbersSource: submission.numbersSource,
+      });
+      setSixPending(submission);
+      sixActions.load(created);
+      sixActions.begin();
+      setView('six-session');
+    },
+    [sixActions],
+  );
+
   /* ---------- 导航 ---------- */
-  const busy =
+  const nineBusy =
     machineState.phase === 'READY' ||
     machineState.phase === 'ANIMATING' ||
     machineState.phase === 'PAUSED' ||
     machineState.phase === 'STEP_COMPLETE';
 
+  const sixBusy =
+    sixState.phase === 'READY' ||
+    sixState.phase === 'ANIMATING' ||
+    sixState.phase === 'PAUSED' ||
+    sixState.phase === 'STEP_COMPLETE';
+
+  const busy = palaceMode === 'six' ? sixBusy : nineBusy;
+
+  const confirmDiscard = useCallback((message: string): boolean => {
+    if (typeof window === 'undefined' || typeof window.confirm !== 'function') return true;
+    return window.confirm(message);
+  }, []);
+
   const goHome = useCallback(() => {
-    if (busy && typeof window !== 'undefined' && typeof window.confirm === 'function') {
-      if (!window.confirm('演算进行中，返回首页将清空当前进度，确定返回吗？')) return;
+    if (palaceMode === 'six') {
+      if (sixBusy && !confirmDiscard('六宫演算进行中，返回将清空当前进度，确定返回吗？')) return;
+      sixActions.clear();
+      setSixPending(null);
+      setView('six-form');
+      return;
     }
+    if (nineBusy && !confirmDiscard('演算进行中，返回首页将清空当前进度，确定返回吗？')) return;
     actions.clear();
     setPending(null);
     setView('home');
-  }, [busy, actions]);
+  }, [actions, confirmDiscard, nineBusy, palaceMode, sixActions, sixBusy]);
+
+  const switchMode = useCallback(() => {
+    const next: PalaceMode = palaceMode === 'six' ? 'nine' : 'six';
+    if (busy && !confirmDiscard('演算进行中，切换玩法将清空当前进度，确定切换吗？')) return;
+    actions.clear();
+    sixActions.clear();
+    setPending(null);
+    setSixPending(null);
+    setPalaceMode(next);
+    setView(next === 'six' ? 'six-form' : 'home');
+  }, [actions, busy, confirmDiscard, palaceMode, sixActions]);
 
   const interpretation = useMemo(() => {
     if (!result || !pending) return null;
     const numbersText = `${result.input.month}、${result.input.day}、${result.input.hour}`;
     return composeInterpretation(result, {
-      mode: pending.mode,
+      mode: pending.mode === 'text' ? 'text' : 'birth',
       inputSummary: buildInputSummary(
         pending,
         result.input.month,
@@ -179,19 +277,37 @@ export default function App() {
     });
   }, [result, pending]);
 
+  const sixInterpretation = useMemo(() => {
+    if (!sixResult || !sixPending) return null;
+    return sixComposeInterpretation(sixResult, {
+      inputSummary: sixPending.numbersNote,
+      originLabel: sixPending.originLabel,
+      numberNotes: sixPending.numberNotes,
+    });
+  }, [sixResult, sixPending]);
+
   const inputSummaryText = pending
     ? buildInputSummary(pending, pending.month, pending.day, pending.hour)
     : '';
 
+  const nineHistory = useMemo(() => history.filter((entry) => entry.mode !== 'six'), [history]);
+  const sixHistory = useMemo(() => history.filter((entry) => entry.mode === 'six'), [history]);
+
   return (
-    <div className={`app${view === 'result' ? ' app--docked' : ''}`}>
+    <div className={`app${view === 'result' || view === 'six-result' ? ' app--docked' : ''}`}>
       <Navbar
         onHome={goHome}
-        onOpenPlayGuide={() => setGuide({ open: true, variant: 'play' })}
-        onOpenRules={() => setGuide({ open: true, variant: 'rules' })}
+        onOpenPlayGuide={() =>
+          setGuide({ open: true, variant: palaceMode === 'six' ? 'six-play' : 'play' })
+        }
+        onOpenRules={() =>
+          setGuide({ open: true, variant: palaceMode === 'six' ? 'six-rules' : 'rules' })
+        }
         onOpenHistory={() => setHistoryOpen(true)}
-        historyCount={history.length}
+        historyCount={palaceMode === 'six' ? sixHistory.length : nineHistory.length}
         busy={busy}
+        mode={palaceMode}
+        onSwitchMode={switchMode}
       />
 
       <main className="app__main">
@@ -217,6 +333,14 @@ export default function App() {
           </div>
         ) : null}
 
+        {view === 'six-form' ? (
+          <div className="container app__form-view">
+            <Suspense fallback={<p className="notice">正在加载六宫起课模块……</p>}>
+              <SixForm onSubmit={handleSixSubmit} onCancel={() => setView('home')} />
+            </Suspense>
+          </div>
+        ) : null}
+
         {view === 'session' && result && pending ? (
           <SessionView
             result={result}
@@ -230,6 +354,21 @@ export default function App() {
               </>
             }
             onBackToInput={() => setView(pending.mode === 'birth' ? 'birth' : 'text')}
+          />
+        ) : null}
+
+        {view === 'six-session' && sixResult && sixPending ? (
+          <SixSessionView
+            result={sixResult}
+            machine={sixMachine}
+            reducedMotion={prefersReducedMotion}
+            inputSummary={
+              <>
+                <span className="badge badge--gold">六宫传统起课</span> {sixPending.originLabel}
+                <span className="faint"> ｜ {sixPending.numbersNote} ｜ 起数 {sixResult.input.month}、{sixResult.input.day}、{sixResult.input.hour}</span>
+              </>
+            }
+            onBackToInput={() => setView('six-form')}
           />
         ) : null}
 
@@ -259,6 +398,26 @@ export default function App() {
               actions.clear();
               setPending(null);
               setView('home');
+            }}
+          />
+        ) : null}
+
+        {view === 'six-result' && sixResult && sixInterpretation && sixPending ? (
+          <SixResultPage
+            result={sixResult}
+            interpretation={sixInterpretation}
+            inputSummary={sixPending.numbersNote}
+            numbersText={`${sixResult.input.month}、${sixResult.input.day}、${sixResult.input.hour}`}
+            numbersNote={sixPending.numbersNote}
+            calendar={sixPending.calendar ?? null}
+            onReplay={() => {
+              sixActions.restart();
+              setView('six-session');
+            }}
+            onNewDivination={() => {
+              sixActions.clear();
+              setSixPending(null);
+              setView('six-form');
             }}
           />
         ) : null}
@@ -301,6 +460,7 @@ export default function App() {
       <HistoryDrawer
         open={historyOpen}
         entries={history}
+        variant={palaceMode}
         onClose={() => setHistoryOpen(false)}
         onRemove={(id) => setHistory(removeHistory(id))}
         onClear={() => setHistory(clearHistory())}

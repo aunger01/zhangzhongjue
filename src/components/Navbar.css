@@ -231,3 +231,15 @@
   opacity: 1;
   color: var(--text-dim);
 }
+
+/* ---------- 宫制切换入口（九宫 ⇄ 六宫） ---------- */
+
+.navbar__switch {
+  border-color: var(--line-strong);
+  color: var(--gold-bright);
+  letter-spacing: 0.1em;
+}
+
+.navbar__switch:hover {
+  background: rgba(212, 169, 79, 0.12);
+}

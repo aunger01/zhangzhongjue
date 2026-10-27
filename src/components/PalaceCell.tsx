@@ -7,11 +7,17 @@
  */
 
 import type { KeyboardEvent } from 'react';
-import { getPalaceMeta, type PalaceOmen } from '../features/divination/palaceConstants';
+import { getPalaceMeta, type PalaceMeta, type PalaceOmen } from '../features/divination/palaceConstants';
 import type { CellLayout } from '../features/divination/palmLayout';
 
 export interface PalaceCellProps {
   cell: CellLayout;
+  /**
+   * 该单元格对应的宫位元数据。
+   * 缺省按九宫表取（cell.index 即九宫算法索引）；
+   * 六宫模式由上层显式传入六宫元数据，避免宫制混用。
+   */
+  palaceMeta?: PalaceMeta;
   /** 是否为当前计数位置 */
   active: boolean;
   /** 是否为当前步骤的起宫 */
@@ -41,6 +47,7 @@ const OMEN_CLASS: Record<PalaceOmen, string> = {
 
 export function PalaceCell({
   cell,
+  palaceMeta,
   active,
   isStart,
   visited,
@@ -53,7 +60,7 @@ export function PalaceCell({
   reducedMotion,
   onSelect,
 }: PalaceCellProps) {
-  const meta = getPalaceMeta(cell.index);
+  const meta = palaceMeta ?? getPalaceMeta(cell.index);
   const classNames = [
     'cell',
     `cell--${cell.segment}`,

@@ -6,7 +6,7 @@
  * 大数计数时前段快速移动、接近落宫时减速（节奏由 buildPath 计算）。
  */
 
-import { cellFor } from '../features/divination/palmLayout';
+import { cellFor, type CellLayout } from '../features/divination/palmLayout';
 
 export interface FingerPointerProps {
   /** 目标宫位索引（来自算法路径） */
@@ -14,10 +14,15 @@ export interface FingerPointerProps {
   reducedMotion: boolean;
   /** 是否处于落宫状态（停止移动，展示光圈） */
   landed: boolean;
+  /**
+   * 目标单元格几何。缺省按九宫单元格表取；
+   * 六宫模式由上层传入六宫单元格，指针只负责移动，不参与任何推算。
+   */
+  cell?: CellLayout;
 }
 
-export function FingerPointer({ index, reducedMotion, landed }: FingerPointerProps) {
-  const cell = cellFor(index);
+export function FingerPointer({ index, reducedMotion, landed, cell: cellProp }: FingerPointerProps) {
+  const cell = cellProp ?? cellFor(index);
 
   return (
     <g

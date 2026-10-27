@@ -22,8 +22,13 @@ export const STEP_TITLES: Record<StepName, string> = {
   hour: '第三步：时',
 };
 
-/** 起卦模式 */
-export type DivinationMode = 'birth' | 'text';
+/**
+ * 起卦模式
+ *
+ * 'birth' / 'text' 属九宫线；'six' 属六宫传统起课线（事由 / 占人 / 自报三数）。
+ * 两条线共用同一套三步演算状态机与动画层，宫制由各自算法模块决定。
+ */
+export type DivinationMode = 'birth' | 'text' | 'six';
 
 /**
  * 单步演算的完整结果。

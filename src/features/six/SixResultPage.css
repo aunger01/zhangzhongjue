@@ -1,0 +1,33 @@
+/* 六宫结果页：断词与用神区块的增量样式 */
+
+.six-result__verses {
+  border-color: rgba(212, 169, 79, 0.3);
+}
+
+.six-result__verse-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.six-result__verse-list > li {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.six-result__verse-text {
+  margin: 0;
+  padding-left: 2px;
+  font-size: 15px;
+  line-height: 1.95;
+  letter-spacing: 0.06em;
+  color: var(--text);
+}
+
+.six-result__subtitle {
+  margin-top: 16px;
+}

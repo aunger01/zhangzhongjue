@@ -16,13 +16,14 @@
  * 两者解耦：改插画不会改变任何计算结果。
  */
 
-import { PALACE_META } from '../features/divination/palaceConstants';
+import { PALACE_META, type PalaceMeta } from '../features/divination/palaceConstants';
 import {
   CELL_LAYOUT,
   CLOUD_CURLS,
   HAND_PATH,
   PALM_VIEWBOX,
   knuckleLines,
+  type CellLayout,
 } from '../features/divination/palmLayout';
 import { FingerPointer } from './FingerPointer';
 import { PalaceCell } from './PalaceCell';
@@ -55,6 +56,13 @@ export interface PalmDiagramProps {
   /** hero：首页低亮度主视觉；session：演算界面 */
   variant?: 'hero' | 'session';
   className?: string;
+  /**
+   * 宫位元数据表。缺省为九宫表；
+   * 六宫模式显式传入六宫表——手形、坐标、装饰层完全复用，只有宫牌内容不同。
+   */
+  palaceMeta?: readonly PalaceMeta[];
+  /** 宫位单元格几何。缺省为九宫布局；六宫模式传入六宫布局。 */
+  cells?: readonly CellLayout[];
 }
 
 export function PalmDiagram({
@@ -73,15 +81,17 @@ export function PalmDiagram({
   onSelect,
   variant = 'session',
   className = '',
+  palaceMeta: metaSet = PALACE_META,
+  cells: cellLayout = CELL_LAYOUT,
 }: PalmDiagramProps) {
   const prefix = `palm-${variant}`;
   const visited = new Set(visitedIndices);
   const knuckles = knuckleLines();
 
-  const activeMeta = activeIndex !== null ? PALACE_META[activeIndex] : null;
+  const activeMeta = activeIndex !== null ? metaSet[activeIndex] : null;
   const ariaLabel = activeMeta
-    ? `九宫掌位图，当前计数落在${activeMeta.order}、${activeMeta.name}（${activeMeta.finger === 'index' ? '食指' : activeMeta.finger === 'middle' ? '中指' : '无名指'}）`
-    : '九宫掌位图，掌心朝向用户，食指、中指、无名指上共九个指节宫位';
+    ? `${metaSet.length} 宫掌位图，当前计数落在${activeMeta.order}、${activeMeta.name}（${activeMeta.finger === 'index' ? '食指' : activeMeta.finger === 'middle' ? '中指' : '无名指'}）`
+    : `${metaSet.length} 宫掌位图，掌心朝向用户，食指、中指、无名指上共 ${metaSet.length} 个指节宫位`;
 
   return (
     <figure className={`palm-figure palm-figure--${variant} ${className}`.trim()}>
@@ -206,12 +216,13 @@ export function PalmDiagram({
           ))}
         </g>
 
-        {/* ═══ 第 3 层：九宫文字与宫牌（独立分组，交互层） ═══ */}
+        {/* ═══ 第 3 层：宫位文字与宫牌（独立分组，交互层） ═══ */}
         <g className="palace-cells">
-          {CELL_LAYOUT.map((cell) => (
+          {cellLayout.map((cell) => (
             <PalaceCell
               key={cell.palaceId}
               cell={cell}
+              palaceMeta={metaSet[cell.index]}
               active={activeIndex === cell.index}
               isStart={startIndex === cell.index}
               visited={visited.has(cell.index)}
@@ -229,7 +240,12 @@ export function PalmDiagram({
 
         {/* 掐指指示器 */}
         {showPointer && activeIndex !== null ? (
-          <FingerPointer index={activeIndex} reducedMotion={reducedMotion} landed={landed} />
+          <FingerPointer
+            index={activeIndex}
+            cell={cellLayout[activeIndex]}
+            reducedMotion={reducedMotion}
+            landed={landed}
+          />
         ) : null}
       </svg>
     </figure>

@@ -8,7 +8,8 @@
 export interface HistoryEntry {
   id: string;
   createdAt: number;
-  mode: 'birth' | 'text';
+  /** 'birth' / 'text' 属九宫线；'six' 属六宫传统起课线 */
+  mode: 'birth' | 'text' | 'six';
   /** 输入摘要（生辰为农历描述；文字模式仅为字数，不含原文） */
   inputSummary: string;
   /** 起数文本，例如 "5、20、2" */
@@ -44,7 +45,7 @@ function isEntry(value: unknown): value is HistoryEntry {
   return (
     typeof entry.id === 'string' &&
     typeof entry.createdAt === 'number' &&
-    (entry.mode === 'birth' || entry.mode === 'text') &&
+    (entry.mode === 'birth' || entry.mode === 'text' || entry.mode === 'six') &&
     typeof entry.inputSummary === 'string' &&
     typeof entry.numbersText === 'string' &&
     Array.isArray(entry.palaces) &&

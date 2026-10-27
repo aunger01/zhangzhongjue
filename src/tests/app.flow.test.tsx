@@ -211,3 +211,91 @@ describe('说明弹层', () => {
     expect(modal.textContent).toContain('不构成');
   });
 });
+
+describe('六宫小六壬（传统六宫法）', () => {
+  it('右上角可切换到六宫，起课表单按需加载', async () => {
+    expect(container.textContent).toContain('九宫小六壬');
+    await click('nav-switch-mode');
+
+    for (let i = 0; i < 20 && !container.querySelector('[data-testid="six-basis"]'); i += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      await flush(2);
+    }
+    expect(container.querySelector('[data-testid="six-basis"]')).toBeTruthy();
+    // 品牌副标题随宫制切换
+    expect(container.textContent).toContain('六宫小六壬');
+    expect(q('six-basis-verse').textContent).toContain('以大安作为正月');
+  });
+
+  it('🔴 占人女例：留连起课，三月初三卯时 → 赤口 / 空亡 / 速喜（与原文一致）', async () => {
+    await click('nav-switch-mode');
+    for (let i = 0; i < 20 && !container.querySelector('[data-testid="six-basis"]'); i += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      await flush(2);
+    }
+
+    await selectOption('six-basis', 'person:female');
+    expect(q('six-basis-verse').textContent).toContain('女起重阴');
+
+    // 取数方式：农历月日时
+    await click('six-source-calendar');
+    await selectOption('six-month', '3');
+    await selectOption('six-day', '3');
+    await selectOption('six-hour', '4');
+
+    expect(q('six-preview').textContent).toContain('留连');
+    expect(q('six-preview').textContent).toContain('3、3、4');
+
+    await click('six-submit');
+
+    // 演算界面：六宫掌图只画六个宫位
+    expect(qa('[data-palace]')).toHaveLength(6);
+
+    await click('six-btn-skip');
+
+    expect(q('result-card-month').getAttribute('data-palace')).toBe('赤口');
+    expect(q('result-card-day').getAttribute('data-palace')).toBe('空亡');
+    expect(q('result-card-hour').getAttribute('data-palace')).toBe('速喜');
+    expect(q('six-result-origin').textContent).toContain('留连');
+    expect(q('six-result-numbers').textContent).toContain('3、3、4');
+    expect(container.textContent).toContain('六神断词');
+  });
+
+  it('自报三数：归约后入数，落宫与直接入数一致', async () => {
+    await click('nav-switch-mode');
+    for (let i = 0; i < 20 && !container.querySelector('[data-testid="six-source-report"]'); i += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      await flush(2);
+    }
+
+    await click('six-source-report');
+    await typeText('six-raw-0', '13');
+    await typeText('six-raw-1', '15');
+    await typeText('six-raw-2', '7');
+
+    expect(q('six-preview').textContent).toContain('1、3、7');
+
+    await click('six-submit');
+    await click('six-btn-skip');
+
+    // 大安起课：月 (0+1-1)%6=0 大安；日 (0+3-1)%6=2 速喜；时 (2+7-1)%6=2 速喜
+    expect(q('result-card-month').getAttribute('data-palace')).toBe('大安');
+    expect(q('result-card-day').getAttribute('data-palace')).toBe('速喜');
+    expect(q('result-card-hour').getAttribute('data-palace')).toBe('速喜');
+  });
+
+  it('六宫规则说明公开六宫对照、公式与起课歌诀', async () => {
+    await click('nav-switch-mode');
+    for (let i = 0; i < 20 && !container.querySelector('[data-testid="six-basis"]'); i += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      await flush(2);
+    }
+    await click('nav-rules');
+    const modal = q('modal');
+    expect(modal.textContent).toContain('六宫定义与掌位');
+    expect(modal.textContent).toContain('(startIndex + count - 1) % 6');
+    expect(modal.textContent).toContain('起课歌诀');
+    expect(modal.textContent).toContain('空亡不起课');
+    expect(modal.textContent).toContain('不构成');
+  });
+});

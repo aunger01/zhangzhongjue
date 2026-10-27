@@ -18,6 +18,10 @@ export interface NavbarProps {
   historyCount: number;
   /** 是否正在演算中（演算中点击首页需确认，避免误触丢失进度） */
   busy: boolean;
+  /** 当前宫制：nine=九宫小六壬，six=六宫小六壬 */
+  mode: 'nine' | 'six';
+  /** 切换到另一宫制 */
+  onSwitchMode: () => void;
 }
 
 export function Navbar({
@@ -27,6 +31,8 @@ export function Navbar({
   onOpenHistory,
   historyCount,
   busy,
+  mode,
+  onSwitchMode,
 }: NavbarProps) {
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement | null>(null);
@@ -68,13 +74,26 @@ export function Navbar({
           </span>
           <span className="navbar__brand-text">
             <strong>掌中诀</strong>
-            <em>九宫小六壬</em>
+            <em>{mode === 'six' ? '六宫小六壬' : '九宫小六壬'}</em>
           </span>
         </button>
 
         <nav className="navbar__links" aria-label="主导航">
           {/* 宽屏横向入口；窄屏整体收进「更多」菜单 */}
           <div className="navbar__group">
+            <button
+              type="button"
+              className="btn btn--sm navbar__switch"
+              onClick={onSwitchMode}
+              data-testid="nav-switch-mode"
+              title={
+                mode === 'six'
+                  ? '切换到九宫小六壬（九宫：大安至天德）'
+                  : '切换到六宫小六壬（传统六宫：大安至空亡）'
+              }
+            >
+              {mode === 'six' ? '九宫小六壬' : '六宫小六壬'}
+            </button>
             <button
               type="button"
               className="btn btn--sm btn--ghost"
@@ -124,6 +143,9 @@ export function Navbar({
 
             {moreOpen ? (
               <div className="navbar__menu" id="nav-more-menu" role="menu" aria-label="更多功能">
+                <button type="button" role="menuitem" onClick={pick(onSwitchMode)} data-testid="nav-more-switch">
+                  {mode === 'six' ? '切换到九宫小六壬' : '切换到六宫小六壬'}
+                </button>
                 <button type="button" role="menuitem" onClick={pick(onOpenPlayGuide)} data-testid="nav-more-play">
                   玩法说明
                 </button>
