@@ -459,7 +459,9 @@ export const SIX_OMEN_LABELS: Readonly<Record<PalaceOmen, string>> = {
  * 版本沿革：
  * - 1.0.0：传统六宫法首版——六宫循环（模 6）、事类起宫、占人起宫、
  *          农历月日时与自报三数两种取数入口。
+ * - 2.0.1：占人用神依底本第 8 页改四季五行（春木夏火秋金冬水）；
+ *          结果页删固定取象句；版本号与九宫统一。
  */
 export const SIX_ALGORITHM_ID = 'liugong-xiaoliuren';
-export const SIX_ALGORITHM_VERSION = '1.0.0';
+export const SIX_ALGORITHM_VERSION = '2.0.1';
 export const SIX_ALGORITHM_NAME = '六宫小六壬 · 传统起课法';

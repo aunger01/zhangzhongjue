@@ -262,7 +262,7 @@ describe('结果对象', () => {
       originLabel: '占人（女）· 留连起课',
       numbersSource: 'calendar',
       algorithmId: 'liugong-xiaoliuren',
-      algorithmVersion: '1.0.0',
+      algorithmVersion: '2.0.1',
     });
     expect(result.createdAt).toBe(createdAt);
     expect(result.steps).toHaveLength(3);
