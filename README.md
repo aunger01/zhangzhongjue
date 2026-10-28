@@ -549,7 +549,7 @@ A：音效由 WebAudio 实时合成（`soundEngine.ts`），体积为 0、无版
 - 分发任何副本或修改版本时，必须**完整保留 `LICENSE` 与版权声明**，并注明原始作者与仓库地址；
   衍生版本必须以同等（或更严格）的非商业条款分发。
 - **商业授权**（含企业内部使用）需事先取得作者书面许可。联系方式以 `LICENSE` 末尾为准：
-  **GitHub [@aunger01](https://github.com/aunger01)**（私信或在本仓库提 Issue；未设公开邮箱）。
+  **GitHub [@aunger01](https://github.com/aunger01)** 或邮箱 **vip@L1N2.com**。
 - 完整条款以仓库根目录的 [`LICENSE`](./LICENSE) 为准；其中文正文具有约束力，英文摘要仅供参考。
 
 ### 第三方组件
