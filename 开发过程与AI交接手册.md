@@ -5,7 +5,16 @@
 >
 > 面向访客/使用者的说明请看同目录 [`README.md`](./README.md)；本文件专注**过程、决策、坑与纪律**。
 >
-> 最后更新：2026-10-20 · 对应版本 `v1.1.0`（已入库 GitHub）
+> 最后更新：2026-10-28 · 对应版本 `v2.0.1`（已合入 GitHub main 并上线）
+
+> **v2.0.1 变更摘要（接手前必读）**：新增**六宫传统起课法**（v2.0 主功能），并统一双算法版本号为 2.0.1。
+> 六宫 = 大安/留连/速喜/赤口/小吉/空亡，落宫 `(start+count−1) mod 6`；起宫依**事由歌诀**
+> （婚大安/财留连/病速喜/官赤口/行小吉，空亡不起课）或**占人**（女留连/男小吉）；
+> **占人用神按底本第 8 页改四季五行**（正~三月春木/四~六夏火/七~九秋金/十~十二冬水，按生月自动推定，表单零新增项）。
+> 一切六宫文案/测试只引唯一权威底本 `掌中诀网站开发/六宫小六壬_PDF原文转录.md`（仓库外），**不再反复识图**。
+> 涉及模块：新增旁挂目录 `features/six/`（7 个文件）+ `tests/sixCalculate.test.ts`（40 项）；
+> 九宫引擎（`calculate.ts` 等）**零改动**；`PalmDiagram/PalaceCell/FingerPointer` 改为可注入宫位集（默认九宫）；
+> `DivinationMode` 与 `historyStorage` 增 `'six'`；`Navbar` 增玩法切换 ⇄；`GuideModal` 增 six-play/six-rules 变体。
 
 > **v1.1.0 变更摘要（接手前必读）**：新增**文字起课**——用户自己写 1～3 个汉字，按简体规范笔顺的笔画起数；
 > 超过三字一律拒绝、**程序不替用户截取**（取字即取象，属用户决定）。旧的「字符数 + Unicode 码点」取数法**已退役**。
@@ -19,20 +28,22 @@
 
 | 项目 | 内容 |
 | --- | --- |
-| 是什么 | 「九宫小六壬」掌诀互动网站：输入生辰或心念文字 → 换算三个数字 → 九宫连续起宫推演 → 掌位图掐指动画 → 结果与解读 |
+| 是什么 | 「小六壬」掌诀互动网站，**双玩法**：① 九宫连续起宫法——输入生辰或心念文字 → 换算三个数字 → 九宫推演 → 掌图掐指动画 → 结果解读；② 六宫传统起课法——事由/占人起宫 → 六宫推演 → 歌诀与用神喜忌 |
 | 在哪 | 本仓库根目录（`git clone` 后的任意路径均可，不要写死成某个本地目录名） |
 | 技术栈 | React 18 + TypeScript + Vite 5 + Vitest 2 + Playwright 1.64；**纯前端，零后端、零数据库、零付费 API** |
 | 依赖 | 运行时只有 `react` / `react-dom` / `lunar-javascript` 三个 |
 | 怎么跑 | `npm install` → `npm run dev`（5173）；`npm run test:serial`；`npm run build`；`npm run preview`（4173） |
-| 验收基线（交付门禁） | `npm run typecheck` + 单测 **9 文件 / 163 项**全绿 + `npm run build` + `npm run build:offline`(+`build:single`) |
+| 验收基线（交付门禁） | `npm run typecheck` + 单测 **10 文件 / 209 项**全绿 + `npm run build` + `npm run build:offline`(+`build:single`) |
 | E2E（可选） | Playwright 17 条用例 × 桌面/移动两项目 = 34 项，保留作回归用；**不作为交付门禁**（2026-10-20 桌面端实测 17/17） |
-| 🔴 强制验收案例 | 农历五月二十日、丑时，起数 **5、20、2** → **小吉 / 空亡 / 病符**（真实算法，零硬编码） |
+| 🔴 强制验收案例（九宫） | 农历五月二十日、丑时，起数 **5、20、2** → **小吉 / 空亡 / 病符**（真实算法，零硬编码） |
+| 🔴 强制验收案例（六宫） | PDF 三黄金课例（三月初三卯时）：婚姻例 → **速喜/小吉/留连**；女例 → **赤口/空亡/速喜**；男例 → **大安/速喜/空亡**（逐字对齐底本） |
 
 ### 三条铁律（违反任何一条即为事故）
 
-1. **动画层不得推算宫位。** 掐指的每一帧都必须取自算法层产出的 `pathIndices`。任何"根据当前位置自己 +1"的写法都是错的。
+1. **动画层不得推算宫位。** 掐指的每一帧都必须取自算法层产出的 `pathIndices`。任何"根据当前位置自己 +1"的写法都是错的。（六宫同理：帧取自六宫引擎输出）
 2. **演算开始后结果对象冻结。** 暂停/继续/上一步/下一步/跳过/改速度一律不得重新计算。单测有断言锁死这一点。
-3. **需求文档没写清楚的传统规则，做成配置项并加注释，不许自己杜撰。** 见第 6 节。
+3. **需求文档没写清楚的传统规则，做成配置项并加注释，不许自己杜撰。** 见第 6 节。六宫文案一律引底本转录稿，不臆造。
+4. **六宫与九宫彻底旁挂。** 六宫全部住在 `features/six/`，禁止让六宫代码 import 九宫引擎、或反过来改九宫引擎迁就六宫；共享组件（掌图/宫格/指示器）只允许"可注入宫位集"这种参数化复用。
 
 ---
 
@@ -143,6 +154,16 @@
 | `features/divination/palmLayout.ts` | `PALM_VIEWBOX` / `CELL_LAYOUT` / `cellFor(index)` / `FINGERS` / `SEGMENT_ORDER` / `fingerPath` / `knuckleLines` / `FINGER_BOTTOM`(306) / `FingerLayoutId` | **纯视觉坐标**，按算法索引寻址 |
 | `features/divination/useDivinationMachine.ts` | `useDivinationMachine` / `machineReducer` / `INITIAL_MACHINE_STATE` / `MachinePhase` / `__machineReducer` | 状态机 + 三个驱动它的 `useEffect` |
 
+**六宫（v2.0 旁挂，`features/six/`，与九宫引擎零交叉）**：
+
+| 文件 | 关键导出 | 说明 |
+| --- | --- | --- |
+| `six/sixConstants.ts` | `SIX_PALACES` / `SIX_PALACE_META` / `getSixPalaceMeta` / `sixPalaceIndexOf` / `SIX_TOPICS` / `getSixTopic` / `SIX_TOPIC_VERSES` / `SIX_SEASONS` / `getSixSeasonByMonth` / `SIX_PERSON_ORIGIN` / `SIX_STEP_SUBJECT` / `SIX_ALGORITHM_ID` / `SIX_ALGORITHM_VERSION`(2.0.1) | 六宫对照表 + 事由/占人起宫表 + 断课歌诀 30 句 + 四季用神表 + 版本 |
+| `six/sixCalculate.ts` | `sixCalculatePalace` / `createSixResult` 等 | **六宫核心纯函数**，`(start+count−1) mod 6`；归约 `((n−1) mod 12)+1`；输出含 pathIndices 同构字段 |
+| `six/sixLayout.ts` | 六宫掌图坐标 | 纯视觉，与计算解耦 |
+| `six/sixMeanings.ts` | `buildSixInterpretation` / `sixNumberNote` / `buildYongshenNotes` / `buildSeasonYongshen` / 六宫免责 | 断词/歌诀/取象/用神喜忌/数字释义组装；**数字奇偶判定一律取模，禁白名单**（见 A5） |
+| `six/SixForm.tsx` / `SixSessionView.tsx` / `SixResultPage.tsx` + 同名 css | — | 六宫三视图；表单零冗文案（圣上钦定 UX 六条，勿回退） |
+
 ### 4.2 输入转换
 
 | 文件 | 关键导出 | 说明 |
@@ -225,6 +246,18 @@
 ⑩ 任何操作序列（暂停/继续/上一步/下一步/跳过/改速）都不替换 state.result 对象
 ```
 
+**六宫不变量**（`sixCalculate.test.ts` 守护）：
+
+```
+① sixCalculatePalace(s, n) === (s + n - 1) % 6
+② 事由起宫：婚大安(0)/财留连(1)/病速喜(2)/官赤口(3)/行小吉(4)；空亡不起课
+③ 占人起宫：女留连(1)、男小吉(4)
+④ 自报三数归约 ((n−1) mod 12)+1：落宫不变（12 是 6 的倍数，1~99 全量验证），奇偶不变
+⑤ 数字释义奇偶判定 = value % 2 === 1（取模，禁白名单——见 A5）
+⑥ 用神：事由按宫位、通用按日宫、占人按四季五行（getSixSeasonByMonth，1~12 越界抛错）
+⑦ PDF 三黄金课例逐字吻合（三月初三卯时：婚例速喜/小吉/留连、女例赤口/空亡/速喜、男例大安/速喜/空亡）
+```
+
 ### 5.3 状态机
 
 ```
@@ -250,7 +283,7 @@ RESTART ──► READY（仍用同一个冻结的结果）
 
 > **不杜撰。做成配置项 + 写清注释 + 在 README 第 7 节列表登记。**
 
-已配置化的 11 项：
+已配置化的 14 项：
 
 | # | 配置 | 位置 |
 | --- | --- | --- |
@@ -265,6 +298,9 @@ RESTART ──► READY（仍用同一个冻结的结果）
 | 9 | 组合解读规则 | `interpretation/composeResult.ts` |
 | 10 | 音效参数 | `audio/soundEngine.ts` |
 | 11 | 历史记录上限与键名 | `history/historyStorage.ts` |
+| 12 | 六宫元数据/断词/起宫表/算法版本 | `six/sixConstants.ts`（`SIX_ALGORITHM_VERSION` 与九宫同为 2.0.1） |
+| 13 | 六宫断课歌诀 30 句 | `six/sixConstants.ts` `SIX_TOPIC_VERSES`——**改动必须有底本依据**，测试逐句锁死 |
+| 14 | 六宫四季用神表 | `six/sixConstants.ts` `SIX_SEASONS` / `getSixSeasonByMonth`（正~三月春木/四~六夏火/七~九秋金/十~十二冬水） |
 
 **明确未实现、也明确没有杜撰**的扩展：真太阳时与出生地时区校正、早晚子时细分、节气精确换月、更多流派的释义校订。这些都应当作**独立可选扩展**排期，不要悄悄塞进主流程。
 
@@ -311,6 +347,15 @@ RESTART ──► READY（仍用同一个冻结的结果）
 - **根因**：本项目展示格式统一为「…日」（与验收案例「五月二十日」一致），是**测试写错了**而非代码错。
 - **解法**：改期望，并在测试里注明格式约定。
 - **教训**：测试挂了先判断"是代码错还是期望错"，不要条件反射改代码。
+
+#### A5. 白名单判奇偶，>10 的数全误判（六宫数字释义）🔴
+
+- **现象**：圣上实测自报三数 18/15/27，释义全部判「双数为阴」。
+- **根因**：`sixNumberNote` 用奇数白名单 `[1,3,5,7,9].includes(value)` 判单数——底本「单阳双阴」只定义在 1~10，
+  开发时照抄成白名单，>10 的奇数（15、27）不在表内被误判双。
+- **解法**：改 `value % 2 === 1`；归约 `((n−1) mod 12)+1` 的模为偶数，raw 与归约值奇偶恒一致，数学自洽。
+- **验证**：补测试 15/27/21 判阳、18/12 判阴、1~10 边界全过。
+- **教训**：**白名单判奇偶（或判任何数值属性）是反模式，凡数值判定一律用取模/谓词，除非集合真的有限。**
 
 ### B 类｜会跑不起来的坑（浏览器与构建）
 
@@ -374,8 +419,8 @@ RESTART ──► READY（仍用同一个冻结的结果）
   ```bash
   npm run test:serial        # = vitest run --no-file-parallelism
   ```
-- **验证**：`npm run test:serial` 恒定 **9 文件 / 163 项 / 0 error / exit 0**。
-- **纪律**：**每次报告"测试全绿"前，先核对文件数与用例数**。正常基线就是 **9 / 163**（v1.1.0 起；v1.0.0 时为 8 / 141），数字偏小 = 中招。
+- **验证**：`npm run test:serial` 恒定 **10 文件 / 209 项 / 0 error / exit 0**。
+- **纪律**：**每次报告"测试全绿"前，先核对文件数与用例数**。正常基线就是 **10 / 209**（v2.0.1 起；v1.1.0 时为 9 / 163，v1.0.0 时为 8 / 141），数字偏小 = 中招。
 
 #### C2. Windows 上 `TMPDIR` 无效
 
@@ -474,13 +519,37 @@ RESTART ──► READY（仍用同一个冻结的结果）
 
 ---
 
+## 7.5 流程与协作坑（G 类）
+
+#### G1. 推送特性分支 ≠ 上线 🔴
+
+- **现象**：把 `feat/six-palace` 推上 GitHub 后汇报完成，圣上质询「怎么没上线」——站点部署跟随 `main`，分支推得再多线上也不动。
+- **根因**：把「推送成功」当成了终点，没做「合入 main + 确认 CF 重建」这最后一口气。
+- **解法/纪律**：**圣上说「推送」= 要上线 = 必须进 main**。合并动作一次做完：`git push origin feat/xxx:main`（快进）→ `git ls-remote` 核对头指针 → 等 CF 重建 1~3 分钟。
+- **教训**：验收标准是「线上可见」，不是「git push 退出码 0」。
+
+#### G2. fine-grained PAT 权限不能只看 API 探测
+
+- **现象**：`GET /repos/{o}/{r}` 返回 200（元数据可读），但真推送 403。
+- **根因**：fine-grained PAT 的 **Metadata 权限自动附带**，`GET /repos` 200 只证明 Metadata 可读；代码读写要单独勾 **Contents: Read and write**。
+- **正确探法**：① GET 具体分支（无 Contents 读 → 404）；② 真推一次（无写 → 403）。协作者 permission 端点 403 不作数（它本身要求高权限）。
+- **附带**：推命令用 `git -c credential.helper='!f(){...$GH_TOKEN...}; f' push`（令牌经环境变量注入）；本机 GCM 先弹「User cancelled dialog」属噪音，随后令牌自动供上，无实害。
+
+#### G3. 提交身份与 CRLF 纪律
+
+- 提交身份为本机自动生成（Bingzhu Pei <v-bingzhupei@cogobuy.com>），与更早的 Aunger 署名并存，属已知现状；
+- 改任何仓库文件**必须保持 CRLF**，改完用 Python 核对 `CRLF/LF` 计数（历史上 `git add -A` 曾误卷本地须知文件，靠 `.gitignore` 收口）。
+
+---
+
 ## 8. 测试体系与验收基线
 
-### 8.1 单元测试（Vitest，9 文件 / 163 项）
+### 8.1 单元测试（Vitest，10 文件 / 209 项）
 
 | 文件 | 项数 | 覆盖 |
 | --- | --- | --- |
-| `calculate.test.ts` | 36 | 算法 + 🔴 强制验收案例专项 |
+| `calculate.test.ts` | 36 | 九宫算法 + 🔴 强制验收案例专项 |
+| `sixCalculate.test.ts` | 40 | **六宫算法**：模 6 公式、事由/占人起宫、归约不变落宫、奇偶取模判定、四季用神、PDF 三黄金课例、歌诀 30 句 |
 | `lunarConverter.test.ts` | 24 | 双向换算、闰月、大小月、跨年、非法/越界 |
 | `textNumbering.test.ts` | 24 | 汉字提取、标点空格、代理对、字数校验 |
 | `strokeNumbering.test.ts` | 22 | **文字起课**：1～3 字分档、超三字拒绝不截断、笔画查表、生僻字拒绝、归约边界、单字档时辰 |
@@ -488,8 +557,8 @@ RESTART ──► READY（仍用同一个冻结的结果）
 | `interpretation.test.ts` | 16 | 释义字段完整、组合规则、建议 2–4 条、免责常驻 |
 | `historyStorage.test.ts` | 10 | 本地存储读写、上限、文字模式不存原文 |
 | `timeMapping.test.ts` | 7 | 十二时辰映射与反向判定 |
-| `app.flow.test.tsx` | 5 | jsdom 应用级完整流程（**无浏览器内核也能跑**） |
-| **合计** | **163** | — |
+| `app.flow.test.tsx` | 11 | jsdom 应用级完整流程（**无浏览器内核也能跑**；v2.0 起含六宫端到端流） |
+| **合计** | **209** | — |
 
 ### 8.2 端到端（Playwright，2 项目 × 17 = 34 项，**可选**）
 
@@ -518,7 +587,7 @@ RESTART ──► READY（仍用同一个冻结的结果）
 
 ```bash
 npm run typecheck      # 必须零错误
-npm run test:serial    # 必须 9 文件 / 163 项 / 0 error
+npm run test:serial    # 必须 10 文件 / 209 项 / 0 error
 npm run build          # 必须成功
 ```
 
@@ -554,8 +623,10 @@ npm run build          # 必须成功
 | 改掌位图外观 | `palmLayout.ts` 坐标 + `PalmDiagram.css` | 解耦测试；E2E 的"九个指节"断言 |
 | 换时辰口径（如早晚子时） | `birth/timeMapping.ts` | `timeMapping.test.ts`；README 配置表；**且这属于传统规则的流派差异，需先向上确认** |
 | 调整历法支持范围 | `birth/calendarRange.ts` | 越界报错的单测；E2E 的年份选项断言（201 项） |
-| 改文字起课口径 | `text/strokeNumbering.ts` 的 `STROKE_CHAR_COUNT` / `strokeTable.ts`（重新生成） | 规则在页面「规则说明」同步；改后必须重跑 163 项单测 |
-| 加一种新的起卦方式 | 新建 `features/<name>/`，产出三个数字后调 `createDivinationResult()` | **不要绕过 `calculate.ts`**；新增视图分支到 `App.tsx` 的 `View` |
+| 改文字起课口径 | `text/strokeNumbering.ts` 的 `STROKE_CHAR_COUNT` / `strokeTable.ts`（重新生成） | 规则在页面「规则说明」同步；改后必须重跑 209 项单测 |
+| 改六宫断词/歌诀/取象文案 | `six/sixConstants.ts`（断词、`SIX_TOPIC_VERSES`）与 `six/sixMeanings.ts` | **改动必须有底本（PDF 转录稿）依据**；`sixCalculate.test.ts` 逐句锁死，须同步 |
+| 改六宫用神取法 | `six/sixConstants.ts` 的 `SIX_SEASONS`/`getSixSeasonByMonth`、`six/sixMeanings.ts` 用神段 | `sixCalculate.test.ts` 四季映射与喜忌断语；传统规则变更先向上确认 |
+| 加一种新的起卦方式 | 新建 `features/<name>/`（六宫即此范式），产出三个数字后调各自引擎 | **不要绕过现有算法层**；新增视图分支到 `App.tsx` 的 `View`，历史记录加新 mode |
 | 改隐私策略 | `historyStorage.ts` / `shareCard.ts` / 结果页声明 | README 第 9 节；`PRIVACY_NOTICE` |
 
 ### 加新功能的推荐流程
@@ -595,7 +666,7 @@ npm run build          # 必须成功
 - [ ] 读了 `README.md`（面向使用者）与本文档（面向开发者）
 - [ ] 通读了上级目录的需求文档 `.docx`（486 段），尤其第 1.1 节的 13 条硬约束
 - [ ] `npm install` 成功；`npm run dev` 能打开首页
-- [ ] `npm run test:serial` → **确认是 9 文件 / 163 项**（若数字偏小，见 C1）
+- [ ] `npm run test:serial` → **确认是 10 文件 / 209 项**（若数字偏小，见 C1）
 - [ ] `npm run build` → 产物大小与第 8.3 节基线一致
 - [ ] 手动走一遍强制验收案例：农历五月二十日 + 丑时 → **小吉 / 空亡 / 病符**
 - [ ] 确认已理解铁律 1（动画不推算宫位）与铁律 2（结果冻结）
@@ -633,6 +704,7 @@ npm run build          # 必须成功
 | ⑨ 入库 | `LICENSE`（非商业）、`.gitignore`、`scripts/build-single-file.mjs`；死代码与死样式清理 | 仓库只收源码；单文件打包从一次性临时脚本升级为正式 npm script |
 | ⑩ v1.1.0 文字起课（2026-10-20） | `strokeNumbering.ts` / `strokeTable.ts` / `gen-stroke-table.mjs` + 22 项新单测；表单与规则页文案重写；掌图视觉定稿；版本号 1.0.0 → 1.1.0 | **取字由程序截取改为用户自定 1～3 字**（取字即取象），超限拒绝不截断；笔画口径取**简体规范笔顺**（既所思即所得）；九宫算法一字未改，历史记录可跨版本对读 |
 | ⑩ 掌图重绘（第一阶段） | `palmLayout.ts` 全量重写：`HAND_PATH`（3844 字符贝塞尔剪影，矢量化自圣上参考图）+ 实测手指几何 + 牌位卡宫格；`PalmDiagram` 拆三独立分组；掌体压暗 + 底部渐隐 mask；**删掌纹 / 指尖金饰 / 腕部太极印** | 手形放弃参数化曲线与开源图标（Phosphor `hand` 为并指举手形，不符），改**直接矢量化参考图**；掌纹涉相学定论，宁留白不臆造；九宫坐标与算法零接触 |
+| ⑪ v2.0.1 六宫传统起课法（2026-10-28） | 旁挂 `features/six/`（7 文件）+ `sixCalculate.test.ts` 40 项；`PalmDiagram/PalaceCell/FingerPointer` 改可注入宫位集；`DivinationMode`/历史分栏/导航切换 ⇄/GuideModal 六宫变体；双算法版本统一 2.0.1；奇偶白名单 bug 修复（A5） | **六宫与九宫彻底旁挂，九宫引擎零改动**；文案/测试只引 PDF 转录底本（识别一遍存档，不再反复识图）；占人用神依底本改四季五行（表单零新增项，季节从生月自动推定）；UX 六条钦定（零冗文案/必选置空/起课前不显起宫/免责一处/图标贴字/无返回钮）；合入 main 上线（05d71dd） |
 
 **一句话总结这次开发的核心经验**：
 > **算法先行、契约先定、三层解耦、测试核对数字、传统规则不杜撰。**
