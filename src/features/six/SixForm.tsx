@@ -12,7 +12,6 @@
 import { useMemo, useState } from 'react';
 import {
   SIX_PERSON_ORIGIN,
-  SIX_STEP_SUBJECT,
   SIX_TOPICS,
   getSixTopic,
   sixPalaceIndex,
@@ -354,10 +353,6 @@ export function SixForm({ onSubmit }: SixFormProps) {
           开始掐指
         </button>
       </div>
-
-      <p className="faint six-form__note">
-        断课提示：{SIX_STEP_SUBJECT.month}为月位，{SIX_STEP_SUBJECT.day}为日位，{SIX_STEP_SUBJECT.hour}为时位。
-      </p>
     </form>
   );
 }

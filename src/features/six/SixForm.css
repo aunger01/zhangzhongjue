@@ -48,9 +48,3 @@
   align-items: baseline;
   gap: 8px;
 }
-
-.six-form__note {
-  margin: 0;
-  line-height: 1.75;
-  font-size: 13px;
-}
