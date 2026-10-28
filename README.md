@@ -425,11 +425,11 @@ npm run preview    # 本地验证构建产物
 > 也可用 Cloudflare Pages：构建命令 `npm run build`、输出目录 `dist`、Node ≥ 18。两条线可并行，互不影响：
 > Pages 走 `docs/` 发布目录，Workers 走 `dist/`（`dist/` 不入库）。
 
-### GitHub Pages（备用站点）
+### GitHub Pages（备用站点，自用）
 
 - **主站（现行）**：`https://dao.l1n2.com/`（Cloudflare Workers，推 `main` 自动重建）
-- 备用地址：`https://10000101.xyz/zhangzhongjue/`
-- 单文件版（可直接下载后双击）：`https://10000101.xyz/zhangzhongjue/standalone.html`
+- 备用站：本仓库 Pages（`main` 分支 `/docs` 目录发布），仅自用，不对外公开
+- 单文件版：`docs/standalone.html`（可直接下载后双击运行）
 
 仓库只收源码（`dist/` 不入库），所以 **Pages 不能指向仓库根目录**：根目录的 `index.html` 是 Vite 源码入口，引用的是未编译的 `/src/main.tsx`，直接发布出去浏览器拿到 TSX 源码会一片白屏。因此仓库额外维护一个 `docs/` 发布目录：
 
