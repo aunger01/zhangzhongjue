@@ -368,6 +368,34 @@ export const SIX_PERSON_ORIGIN = {
 export type SixPersonGender = keyof typeof SIX_PERSON_ORIGIN;
 
 /* ------------------------------------------------------------------ */
+/* 占人取用神：四季五行（PDF 第 8 页「占人取用神」）                      */
+/* ------------------------------------------------------------------ */
+
+/**
+ * 四季五行（底本第 8 页原文：占人以四季为用神，如春季生人以木为用神，
+ * 夏季生人以火为用神，秋季生人以金为用神，冬季生人以水为用神）。
+ * 月界按农历正～三月为春、四～六月为夏、七～九月为秋、十～十二月为冬。
+ */
+export const SIX_SEASONS = [
+  { name: '春', element: '木', monthFrom: 1, monthTo: 3 },
+  { name: '夏', element: '火', monthFrom: 4, monthTo: 6 },
+  { name: '秋', element: '金', monthFrom: 7, monthTo: 9 },
+  { name: '冬', element: '水', monthFrom: 10, monthTo: 12 },
+] as const;
+
+export type SixSeason = (typeof SIX_SEASONS)[number];
+
+/** 依农历月份取季节（占人起课以生月定生季，进而定用神五行） */
+export function getSixSeasonByMonth(month: number): SixSeason {
+  if (!Number.isInteger(month) || month < 1 || month > 12) {
+    throw new Error(`农历月份必须为 1 至 12 的整数，收到：${String(month)}`);
+  }
+  return SIX_SEASONS.find(
+    (season) => month >= season.monthFrom && month <= season.monthTo,
+  ) as SixSeason;
+}
+
+/* ------------------------------------------------------------------ */
 /* 变通取数：单双阴阳与 1~10 吉凶数（PDF 第 3 页）                       */
 /* ------------------------------------------------------------------ */
 

@@ -16,8 +16,8 @@ import {
   SIX_NUMBER_MEANINGS,
   SIX_PALACE_META,
   SIX_PALACES,
-  SIX_STEP_SUBJECT,
   getSixPalaceMeta,
+  getSixSeasonByMonth,
   getSixTopic,
   getSixTopicVerse,
   type SixPalaceName,
@@ -143,9 +143,14 @@ export function sixElementRelation(dayElement: string, hourElement: string): Six
 const AUSPICIOUS_PALACES: ReadonlySet<string> = new Set(['大安', '速喜', '小吉']);
 
 export interface SixYongshen {
-  /** 用神宫名 */
-  palaceName: SixPalaceName;
-  palaceIndex: number;
+  /** 用神名：宫位制为宫名（如「大安」），四季制为五行名（如「木」） */
+  name: string;
+  /** 用神五行 */
+  element: string;
+  /** 用神宫名（宫位制才有；四季制为 null） */
+  palaceName: SixPalaceName | null;
+  /** 用神宫索引（宫位制才有；四季制为 null） */
+  palaceIndex: number | null;
   /** 取用神的依据（底本原文） */
   basis: string;
   /** 用神喜忌断语（逐条对应课内其余宫位） */
@@ -155,10 +160,11 @@ export interface SixYongshen {
 /**
  * 取用神（底本第 7 页「占事取用神」）：
  *   占婚姻以大安为用神、求财以留连、疾病以速喜、官司以赤口、出行以小吉；
- *   通用问事与占人起课无指定宫位，以日宫（自身）为用神。
+ *   通用问事无指定宫位，以日宫（自身）为用神。
+ * 占人起课不取宫位，改走四季用神（见 buildSeasonYongshen）。
  */
-export function sixResolveYongshenIndex(topicId: SixTopicId | null, dayIndex: number): number {
-  if (topicId && topicId !== 'general') {
+export function sixResolveYongshenIndex(topicId: SixTopicId, dayIndex: number): number {
+  if (topicId !== 'general') {
     return sixPalaceIndexOf(getSixTopic(topicId).origin);
   }
   return dayIndex;
@@ -170,18 +176,22 @@ function sixPalaceIndexOf(name: SixPalaceName): number {
 
 /** 按底本「用神喜忌」生成断语：与吉神 / 凶神相冲克、相生的四种组合，外加逢空亡 */
 function buildYongshenNotes(
-  yongshenIndex: number,
+  yongshen: { name: string; element: string },
   stepMetas: ReadonlyArray<{ step: 'month' | 'day' | 'hour'; index: number }>,
+  options: { skipIndex?: number | null; emptyNote?: string } = {},
 ): string[] {
-  const yongshen = getSixPalaceMeta(yongshenIndex);
   const notes: string[] = [];
-
-  if (yongshen.name === '空亡') {
-    notes.push('课内用神逢空亡：主事情虚假，吉凶变动不定，寻人望事有变。');
+  if (options.emptyNote) {
+    notes.push(options.emptyNote);
   }
+  // 用神名与五行同名（四季制）时不重复标注五行
+  const yongshenLabel =
+    yongshen.name === yongshen.element
+      ? `用神${yongshen.element}`
+      : `用神${yongshen.name}（${yongshen.element}）`;
 
   for (const { step, index } of stepMetas) {
-    if (index === yongshenIndex) continue;
+    if (options.skipIndex != null && index === options.skipIndex) continue;
     const other = getSixPalaceMeta(index);
     const relation = sixElementRelation(yongshen.element, other.element);
     const otherIsAuspicious = AUSPICIOUS_PALACES.has(other.name);
@@ -190,24 +200,40 @@ function buildYongshenNotes(
 
     if (relation === 'self-controls' || relation === 'other-controls') {
       notes.push(
-        `用神${yongshen.name}（${yongshen.element}）与${stepLabel}位${otherKind}（${other.element}）相冲克：${
+        `${yongshenLabel}与${stepLabel}位${otherKind}（${other.element}）相冲克：${
           otherIsAuspicious ? '主吉事不吉，办事无成，喜事成空。' : '主凶事不凶，凶中有吉，化险为夷。'
         }`,
       );
     } else if (relation === 'self-generates' || relation === 'other-generates') {
       notes.push(
-        `用神${yongshen.name}（${yongshen.element}）与${stepLabel}位${otherKind}（${other.element}）相生：${
+        `${yongshenLabel}与${stepLabel}位${otherKind}（${other.element}）相生：${
           otherIsAuspicious ? '主吉事更吉，喜上加喜。' : '主凶事更凶，雪上加霜。'
         }`,
       );
     } else {
       notes.push(
-        `用神${yongshen.name}与${stepLabel}位${other.name}五行同气（${other.element}）：取向一致，事体一贯。`,
+        `${yongshenLabel}与${stepLabel}位${other.name}五行同气（${other.element}）：取向一致，事体一贯。`,
       );
     }
   }
 
   return notes;
+}
+
+/** 占人用神（底本第 8 页「占人取用神」）：以生季定五行——春木、夏火、秋金、冬水 */
+function buildSeasonYongshen(
+  lunarMonth: number,
+  stepMetas: ReadonlyArray<{ step: 'month' | 'day' | 'hour'; index: number }>,
+): SixYongshen {
+  const season = getSixSeasonByMonth(lunarMonth);
+  return {
+    name: season.element,
+    element: season.element,
+    palaceName: null,
+    palaceIndex: null,
+    basis: `占人以四季为用神：农历${lunarMonth}月属${season.name}季，以${season.element}为用神。`,
+    notes: buildYongshenNotes({ name: season.element, element: season.element }, stepMetas),
+  };
 }
 
 /* ------------------------------------------------------------------ */
@@ -363,23 +389,36 @@ export function sixComposeInterpretation(
   const tone: OverallTone =
     auspiciousCount >= 2 ? 'auspicious' : inauspiciousCount >= 2 ? 'inauspicious' : 'mixed';
 
-  // 用神（底本：占事以宫位取用神；通用 / 占人以日宫为用神）
-  const yongshenIndex = sixResolveYongshenIndex(topicId, dayMeta.index);
-  const yongshenMeta = getSixPalaceMeta(yongshenIndex);
-  const yongshenBasis =
-    topicId && topicId !== 'general'
-      ? `占${getSixTopic(topicId).label}，以宫位取用神：${getSixTopic(topicId).origin}为用神。`
-      : '通用问事 / 占人起课无指定宫位，以日宫（自身）为用神。';
-  const yongshen: SixYongshen = {
-    palaceName: yongshenMeta.name,
-    palaceIndex: yongshenIndex,
-    basis: yongshenBasis,
-    notes: buildYongshenNotes(yongshenIndex, [
-      { step: 'month', index: monthMeta.index },
-      { step: 'day', index: dayMeta.index },
-      { step: 'hour', index: hourMeta.index },
-    ]),
-  };
+  // 用神（底本第 7~8 页：占事以宫位取用神；通用问事以日宫；占人以四季五行）
+  const stepMetas = [
+    { step: 'month' as const, index: monthMeta.index },
+    { step: 'day' as const, index: dayMeta.index },
+    { step: 'hour' as const, index: hourMeta.index },
+  ];
+  const yongshen: SixYongshen = topicId
+    ? (() => {
+        const yongshenIndex = sixResolveYongshenIndex(topicId, dayMeta.index);
+        const yongshenMeta = getSixPalaceMeta(yongshenIndex);
+        const basis =
+          topicId !== 'general'
+            ? `占${getSixTopic(topicId).label}，以宫位取用神：${getSixTopic(topicId).origin}为用神。`
+            : '通用问事无指定宫位，以日宫（自身）为用神。';
+        return {
+          name: yongshenMeta.name,
+          element: yongshenMeta.element,
+          palaceName: yongshenMeta.name,
+          palaceIndex: yongshenIndex,
+          basis,
+          notes: buildYongshenNotes(yongshenMeta, stepMetas, {
+            skipIndex: yongshenIndex,
+            emptyNote:
+              yongshenMeta.name === '空亡'
+                ? '课内用神逢空亡：主事情虚假，吉凶变动不定，寻人望事有变。'
+                : undefined,
+          }),
+        };
+      })()
+    : buildSeasonYongshen(result.input.month, stepMetas);
 
   const sameElementNote =
     monthMeta.element === dayMeta.element && dayMeta.element === hourMeta.element
@@ -387,9 +426,8 @@ export function sixComposeInterpretation(
       : '';
 
   const overall = [
-    `本局以${result.input.originName}起课（${context.originLabel}），`,
-    `月位落${monthMeta.name}、日位落${dayMeta.name}、时位落${hourMeta.name}。`,
-    `月看${SIX_STEP_SUBJECT.month}，日看${SIX_STEP_SUBJECT.day}，时看${SIX_STEP_SUBJECT.hour}。`,
+    `本局以${result.input.originName}起课——${context.originLabel}；`,
+    `月位落${monthMeta.name}、日位落${dayMeta.name}、时位落${hourMeta.name}；`,
     `月${omenWord(monthMeta.omen)}、日${omenWord(dayMeta.omen)}、时${omenWord(hourMeta.omen)}。`,
   ].join('');
 

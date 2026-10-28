@@ -19,6 +19,7 @@ import {
   SIX_UNLUCKY_NUMBERS,
   SIX_VERSE_TOPIC_LABELS,
   getSixPalaceMeta,
+  getSixSeasonByMonth,
   getSixTopic,
   sixPalaceIndex,
 } from '../features/six/sixConstants';
@@ -450,15 +451,60 @@ describe('🔴 文案依转录底本：标点齐全、不复用九宫、免责�
     expect(SIX_TOPIC_VERSES.travel['大安']).toBe('大安外出不宜远，不求财来可以走');
   });
 
-  it('用神取法依底本：占事以宫位取用神，通用与占人以日宫为用神', () => {
+  it('用神取法依底本：占事以宫位取用神，通用问事以日宫为用神', () => {
     expect(sixResolveYongshenIndex('marriage', 0)).toBe(0);
     expect(sixResolveYongshenIndex('wealth', 0)).toBe(1);
     expect(sixResolveYongshenIndex('illness', 0)).toBe(2);
     expect(sixResolveYongshenIndex('lawsuit', 0)).toBe(3);
     expect(sixResolveYongshenIndex('travel', 0)).toBe(4);
-    // 通用问事 / 占人：以日宫为用神（不因起宫改变）
+    // 通用问事：以日宫为用神（不因起宫改变）
     expect(sixResolveYongshenIndex('general', 3)).toBe(3);
-    expect(sixResolveYongshenIndex(null, 5)).toBe(5);
+  });
+
+  it('占人取用神依底本第 8 页：四季五行——春木、夏火、秋金、冬水', () => {
+    expect(getSixSeasonByMonth(1).element).toBe('木');
+    expect(getSixSeasonByMonth(2).name).toBe('春');
+    expect(getSixSeasonByMonth(3).element).toBe('木');
+    expect(getSixSeasonByMonth(4).element).toBe('火');
+    expect(getSixSeasonByMonth(6).element).toBe('火');
+    expect(getSixSeasonByMonth(7).element).toBe('金');
+    expect(getSixSeasonByMonth(9).element).toBe('金');
+    expect(getSixSeasonByMonth(10).element).toBe('水');
+    expect(getSixSeasonByMonth(11).name).toBe('冬');
+    expect(getSixSeasonByMonth(12).element).toBe('水');
+    expect(() => getSixSeasonByMonth(0)).toThrow();
+    expect(() => getSixSeasonByMonth(13)).toThrow();
+  });
+
+  it('占人起课用神为四季五行：女例三月（春）用神为木，喜忌与三宫论生克', () => {
+    // 底本女例：留连起课，三月初三卯时 → 月赤口、日空亡、时速喜
+    const result = createSixResult({
+      originIndex: 1,
+      originLabel: '占人（女）· 留连起课',
+      month: 3,
+      day: 3,
+      hour: 4,
+      numbersNote: '农历三月初三 · 卯时',
+    });
+    const interpretation = sixComposeInterpretation(result, {
+      inputSummary: '农历三月初三 · 卯时',
+      originLabel: '占人（女）· 留连起课',
+    });
+    expect(interpretation.yongshen.palaceName).toBeNull();
+    expect(interpretation.yongshen.palaceIndex).toBeNull();
+    expect(interpretation.yongshen.name).toBe('木');
+    expect(interpretation.yongshen.element).toBe('木');
+    expect(interpretation.yongshen.basis).toContain('春');
+    expect(interpretation.yongshen.basis).toContain('木');
+    // 木克土（日位空亡=凶神）→ 凶中有吉；金克木（月位赤口=凶神）→ 凶中有吉；
+    // 木生火（时位速喜=吉神）→ 吉上加喜
+    const notes = interpretation.yongshen.notes.join('');
+    expect(notes).toContain('空亡');
+    expect(notes).toContain('赤口');
+    expect(notes).toContain('速喜');
+    expect(notes).toContain('化险为夷');
+    expect(notes).toContain('喜上加喜');
+    expect(interpretation.yongshen.notes).toHaveLength(3);
   });
 
   it('求财落速喜的解读引本课歌诀，且用神取留连', () => {
