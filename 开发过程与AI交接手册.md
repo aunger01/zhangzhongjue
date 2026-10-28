@@ -545,7 +545,7 @@ RESTART ──► READY（仍用同一个冻结的结果）
 
 #### G3. 提交身份与 CRLF 纪律
 
-- 提交身份为本机自动生成（Bingzhu Pei <v-bingzhupei@cogobuy.com>），与更早的 Aunger 署名并存，属已知现状；
+- 提交身份为本机 git 自动生成的默认身份（姓名 + 单位邮箱，非 Aunger 署名），与更早的 Aunger 署名并存，属已知现状；
 - 改任何仓库文件**必须保持 CRLF**，改完用 Python 核对 `CRLF/LF` 计数（历史上 `git add -A` 曾误卷本地须知文件，靠 `.gitignore` 收口）。
 
 ---
