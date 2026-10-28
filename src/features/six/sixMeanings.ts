@@ -14,7 +14,6 @@ import type { StepReading, OverallTone } from '../interpretation/composeResult';
 import {
   SIX_GUARDIAN_MEANINGS,
   SIX_NUMBER_MEANINGS,
-  SIX_ODD_NUMBERS,
   SIX_PALACE_META,
   SIX_PALACES,
   SIX_STEP_SUBJECT,
@@ -312,7 +311,9 @@ function omenWord(omen: 'auspicious' | 'mixed' | 'inauspicious'): string {
 /** 1~10 数字释义（仅对 1~10 生效，其余数字只标阴阳吉凶属性） */
 export function sixNumberNote(value: number): string {
   const text = SIX_NUMBER_MEANINGS[value];
-  const odd = (SIX_ODD_NUMBERS as readonly number[]).includes(value);
+  // 阴阳按奇偶性判定（底本以 1~10 定义单阳双阴，对更大的自报数按奇偶自然推广；
+  // 归约公式 ((n−1) mod 12)+1 的模为偶数，raw 与归约后奇偶一致）
+  const odd = value % 2 === 1;
   const parity = odd ? '单数为阳' : '双数为阴';
   if (!text) return `${value}：${parity}，超出 1~10 释义范围，只取其阴阳属性。`;
   return `${value}：${parity}，${text}。`;

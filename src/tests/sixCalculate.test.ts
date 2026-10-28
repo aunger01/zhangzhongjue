@@ -328,6 +328,18 @@ describe('六宫释义', () => {
     expect(sixNumberNote(11)).toContain('超出 1~10 释义范围');
   });
 
+  it('🔴 大于 10 的自报数按奇偶性判阴阳（15/27 为单数阳，非白名单误判）', () => {
+    // 圣上实测发现：15、27 曾被白名单误判为「双数」
+    expect(sixNumberNote(15)).toContain('单数为阳');
+    expect(sixNumberNote(27)).toContain('单数为阳');
+    expect(sixNumberNote(18)).toContain('双数为阴');
+    expect(sixNumberNote(21)).toContain('单数为阳');
+    expect(sixNumberNote(12)).toContain('双数为阴');
+    // 1~10 范围内判定不变
+    expect(sixNumberNote(7)).toContain('单数为阳');
+    expect(sixNumberNote(10)).toContain('双数为阴');
+  });
+
   it('五行取事五条齐备', () => {
     expect(SIX_ELEMENT_CASES).toHaveLength(5);
     expect(SIX_ELEMENT_CASES.map((item) => item.title)).toEqual([
