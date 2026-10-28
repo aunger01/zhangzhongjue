@@ -15,6 +15,7 @@
 > 涉及模块：新增旁挂目录 `features/six/`（7 个文件）+ `tests/sixCalculate.test.ts`（40 项）；
 > 九宫引擎（`calculate.ts` 等）**零改动**；`PalmDiagram/PalaceCell/FingerPointer` 改为可注入宫位集（默认九宫）；
 > `DivinationMode` 与 `historyStorage` 增 `'six'`；`Navbar` 增玩法切换 ⇄；`GuideModal` 增 six-play/six-rules 变体。
+> **v2.0.1 追加**：`Modal` 补齐无障碍——打开即聚焦、Tab/Shift+Tab 焦点陷阱、关闭后焦点归还触发元素（jsdom 测试锁死）。
 
 > **v1.1.0 变更摘要（接手前必读）**：新增**文字起课**——用户自己写 1～3 个汉字，按简体规范笔顺的笔画起数；
 > 超过三字一律拒绝、**程序不替用户截取**（取字即取象，属用户决定）。旧的「字符数 + Unicode 码点」取数法**已退役**。
@@ -33,7 +34,7 @@
 | 技术栈 | React 18 + TypeScript + Vite 5 + Vitest 2 + Playwright 1.64；**纯前端，零后端、零数据库、零付费 API** |
 | 依赖 | 运行时只有 `react` / `react-dom` / `lunar-javascript` 三个 |
 | 怎么跑 | `npm install` → `npm run dev`（5173）；`npm run test:serial`；`npm run build`；`npm run preview`（4173） |
-| 验收基线（交付门禁） | `npm run typecheck` + 单测 **10 文件 / 209 项**全绿 + `npm run build` + `npm run build:offline`(+`build:single`) |
+| 验收基线（交付门禁） | `npm run typecheck` + 单测 **10 文件 / 210 项**全绿 + `npm run build` + `npm run build:offline`(+`build:single`) |
 | E2E（可选） | Playwright 17 条用例 × 桌面/移动两项目 = 34 项，保留作回归用；**不作为交付门禁**（2026-10-20 桌面端实测 17/17） |
 | 🔴 强制验收案例（九宫） | 农历五月二十日、丑时，起数 **5、20、2** → **小吉 / 空亡 / 病符**（真实算法，零硬编码） |
 | 🔴 强制验收案例（六宫） | PDF 三黄金课例（三月初三卯时）：婚姻例 → **速喜/小吉/留连**；女例 → **赤口/空亡/速喜**；男例 → **大安/速喜/空亡**（逐字对齐底本） |
@@ -420,7 +421,7 @@ RESTART ──► READY（仍用同一个冻结的结果）
   npm run test:serial        # = vitest run --no-file-parallelism
   ```
 - **验证**：`npm run test:serial` 恒定 **10 文件 / 209 项 / 0 error / exit 0**。
-- **纪律**：**每次报告"测试全绿"前，先核对文件数与用例数**。正常基线就是 **10 / 209**（v2.0.1 起；v1.1.0 时为 9 / 163，v1.0.0 时为 8 / 141），数字偏小 = 中招。
+- **纪律**：**每次报告"测试全绿"前，先核对文件数与用例数**。正常基线就是 **10 / 210**（v2.0.1 起；v2.0 初版 10 / 209，v1.1.0 时为 9 / 163），数字偏小 = 中招。
 
 #### C2. Windows 上 `TMPDIR` 无效
 
@@ -505,6 +506,13 @@ RESTART ──► READY（仍用同一个冻结的结果）
 - 详见 B4；补充一条：若把脚本内联进 `<head>`，`defer` 无外部脚本可延迟，脚本立即同步执行，
   此时 `#root` 尚未解析 → 挂载失败（白屏）。`scripts/build-single-file.mjs` 已强制把脚本插到 `</body>` 前。
 
+#### E8. jsdom 不实现 Tab 原生走焦，焦点测试必须走键盘事件路径
+
+- **现象**：给 `Modal` 补焦点陷阱时，断言「对话框上按 Tab 后焦点进入第一个可聚焦元素」失败——`activeElement` 纹丝不动。
+- **根因**：jsdom **不实现浏览器原生的 Tab 键盘导航**；我们的事件处理里「焦点已在弹层内且不在首/尾」时走 `default`（交给浏览器原生顺序），在 jsdom 里就是什么都不发生。
+- **解法**：焦点测试只断言**确定性路径**——先用 `focus()` 把焦点放到目标元素，再用 `document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab' }))` 验证循环行为；原生走焦留给 Playwright E2E。
+- **教训**：**依赖浏览器默认行为的交互，jsdom 测不了结果、只能测「我们自己的处理分支」**。
+
 #### E2. E2E 断言早于懒加载渲染
 
 - **现象**：E2E《超出支持范围的公历年份》失败，选项数为 0。
@@ -544,7 +552,7 @@ RESTART ──► READY（仍用同一个冻结的结果）
 
 ## 8. 测试体系与验收基线
 
-### 8.1 单元测试（Vitest，10 文件 / 209 项）
+### 8.1 单元测试（Vitest，10 文件 / 210 项）
 
 | 文件 | 项数 | 覆盖 |
 | --- | --- | --- |
@@ -557,8 +565,8 @@ RESTART ──► READY（仍用同一个冻结的结果）
 | `interpretation.test.ts` | 16 | 释义字段完整、组合规则、建议 2–4 条、免责常驻 |
 | `historyStorage.test.ts` | 10 | 本地存储读写、上限、文字模式不存原文 |
 | `timeMapping.test.ts` | 7 | 十二时辰映射与反向判定 |
-| `app.flow.test.tsx` | 11 | jsdom 应用级完整流程（**无浏览器内核也能跑**；v2.0 起含六宫端到端流） |
-| **合计** | **209** | — |
+| `app.flow.test.tsx` | 12 | jsdom 应用级完整流程（**无浏览器内核也能跑**；v2.0 起含六宫端到端流 + 弹层焦点管理） |
+| **合计** | **210** | — |
 
 ### 8.2 端到端（Playwright，2 项目 × 17 = 34 项，**可选**）
 
@@ -587,7 +595,7 @@ RESTART ──► READY（仍用同一个冻结的结果）
 
 ```bash
 npm run typecheck      # 必须零错误
-npm run test:serial    # 必须 10 文件 / 209 项 / 0 error
+npm run test:serial    # 必须 10 文件 / 210 项 / 0 error
 npm run build          # 必须成功
 ```
 
@@ -623,7 +631,7 @@ npm run build          # 必须成功
 | 改掌位图外观 | `palmLayout.ts` 坐标 + `PalmDiagram.css` | 解耦测试；E2E 的"九个指节"断言 |
 | 换时辰口径（如早晚子时） | `birth/timeMapping.ts` | `timeMapping.test.ts`；README 配置表；**且这属于传统规则的流派差异，需先向上确认** |
 | 调整历法支持范围 | `birth/calendarRange.ts` | 越界报错的单测；E2E 的年份选项断言（201 项） |
-| 改文字起课口径 | `text/strokeNumbering.ts` 的 `STROKE_CHAR_COUNT` / `strokeTable.ts`（重新生成） | 规则在页面「规则说明」同步；改后必须重跑 209 项单测 |
+| 改文字起课口径 | `text/strokeNumbering.ts` 的 `STROKE_CHAR_COUNT` / `strokeTable.ts`（重新生成） | 规则在页面「规则说明」同步；改后必须重跑 210 项单测 |
 | 改六宫断词/歌诀/取象文案 | `six/sixConstants.ts`（断词、`SIX_TOPIC_VERSES`）与 `six/sixMeanings.ts` | **改动必须有底本（PDF 转录稿）依据**；`sixCalculate.test.ts` 逐句锁死，须同步 |
 | 改六宫用神取法 | `six/sixConstants.ts` 的 `SIX_SEASONS`/`getSixSeasonByMonth`、`six/sixMeanings.ts` 用神段 | `sixCalculate.test.ts` 四季映射与喜忌断语；传统规则变更先向上确认 |
 | 加一种新的起卦方式 | 新建 `features/<name>/`（六宫即此范式），产出三个数字后调各自引擎 | **不要绕过现有算法层**；新增视图分支到 `App.tsx` 的 `View`，历史记录加新 mode |
@@ -666,7 +674,7 @@ npm run build          # 必须成功
 - [ ] 读了 `README.md`（面向使用者）与本文档（面向开发者）
 - [ ] 通读了上级目录的需求文档 `.docx`（486 段），尤其第 1.1 节的 13 条硬约束
 - [ ] `npm install` 成功；`npm run dev` 能打开首页
-- [ ] `npm run test:serial` → **确认是 10 文件 / 209 项**（若数字偏小，见 C1）
+- [ ] `npm run test:serial` → **确认是 10 文件 / 210 项**（若数字偏小，见 C1）
 - [ ] `npm run build` → 产物大小与第 8.3 节基线一致
 - [ ] 手动走一遍强制验收案例：农历五月二十日 + 丑时 → **小吉 / 空亡 / 病符**
 - [ ] 确认已理解铁律 1（动画不推算宫位）与铁律 2（结果冻结）

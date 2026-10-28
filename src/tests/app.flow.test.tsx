@@ -210,6 +210,49 @@ describe('说明弹层', () => {
     expect(modal.textContent).toContain('不敢自称某部古籍原貌');
     expect(modal.textContent).toContain('不构成');
   });
+
+  it('无障碍：打开即聚焦对话框，Tab 循环不出弹层，Esc 关闭后焦点归还触发元素', async () => {
+    const trigger = q('nav-rules');
+    await act(async () => {
+      trigger.focus();
+    });
+    await click('nav-rules');
+
+    const modal = q('modal');
+    // 打开即聚焦对话框本身
+    expect(document.activeElement).toBe(modal);
+
+    // 焦点在对话框上按 Tab：jsdom 不实现原生走焦，但断言焦点不出弹层
+    await act(async () => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+    });
+    const closeBtn = modal.querySelector<HTMLButtonElement>('button');
+    if (!closeBtn) throw new Error('弹层内找不到关闭按钮');
+    expect(modal.contains(document.activeElement)).toBe(true);
+
+    // 聚焦到唯一可聚焦元素（关闭钮）后：Tab 与 Shift+Tab 都循环回自身，焦点始终不出对话框
+    await act(async () => {
+      closeBtn.focus();
+    });
+    await act(async () => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+    });
+    expect(document.activeElement).toBe(closeBtn);
+    await act(async () => {
+      document.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true }),
+      );
+    });
+    expect(document.activeElement).toBe(closeBtn);
+
+    // Esc 关闭后，焦点归还给打开前的触发元素
+    await act(async () => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
+    await flush(2);
+    expect(container.querySelector('[data-testid="modal"]')).toBeNull();
+    expect(document.activeElement).toBe(trigger);
+  });
 });
 
 describe('六宫小六壬（传统六宫法）', () => {
