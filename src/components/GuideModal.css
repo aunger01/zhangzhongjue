@@ -105,3 +105,8 @@
   border: 1px solid rgba(212, 169, 79, 0.4);
   background: rgba(212, 169, 79, 0.09);
 }
+
+/* 说明弹层内：提示条与上方表格 / 列表之间留出空隙（结果页的同名类不受影响） */
+.guide .note-warn {
+  margin-top: 12px;
+}

@@ -12,7 +12,7 @@
 import { useMemo, useState } from 'react';
 import { ResultCard } from '../../components/ResultCard';
 import { SIX_ALGORITHM_NAME, SIX_ALGORITHM_VERSION, getSixPalaceMeta } from './sixConstants';
-import type { SixResult } from './sixCalculate';
+import type { SixResult, SixNumbersSource } from './sixCalculate';
 import type { SixInterpretation } from './sixMeanings';
 import type { CalendarInfo } from '../divination/types';
 import { copyText, downloadBlob, renderShareCard } from '../share/shareCard';
@@ -22,9 +22,12 @@ import './SixResultPage.css';
 export interface SixResultPageProps {
   result: SixResult;
   interpretation: SixInterpretation;
-  inputSummary: string;
   numbersText: string;
-  /** 取数说明（农历月日时 / 自报三数与归约） */
+  /** 取数入口：农历月日时 / 自报三数 */
+  numbersSource: SixNumbersSource;
+  /** 自报模式下的原始三数（农历模式为 null） */
+  rawNumbers: [number, number, number] | null;
+  /** 农历模式下的占测时辰文本（农历月日 + 时辰） */
   numbersNote: string;
   calendar?: CalendarInfo | null;
   onReplay: () => void;
@@ -34,14 +37,29 @@ export interface SixResultPageProps {
 export function SixResultPage({
   result,
   interpretation,
-  inputSummary,
   numbersText,
+  numbersSource,
+  rawNumbers,
   numbersNote,
   calendar,
   onReplay,
   onNewDivination,
 }: SixResultPageProps) {
   const [shareState, setShareState] = useState('');
+
+  /**
+   * 两栏分工（v2.0.2 修正「占测时辰 / 取数说明」文字完全重复）：
+   *   · 农历模式：「占测时辰」给农历月日与时辰；「取数说明」只讲取数口径，不重复具体数字。
+   *   · 自报模式：标题改「自报三数」避免「时辰」误导，展示用户原始报数；
+   *     「取数说明」只讲归约规则，不重复归约后的起数。
+   */
+  const timeLabel = numbersSource === 'calendar' ? '占测时辰' : '自报三数';
+  const timeText =
+    numbersSource === 'calendar' ? numbersNote : (rawNumbers?.join('、') ?? '—');
+  const numbersNoteText =
+    numbersSource === 'calendar'
+      ? '依问事之时的农历月、日、时辰取数：月取农历月序、日取农历日序、时取时辰序数（子时起 1），自起宫顺推三步。'
+      : '自报数大于 12 时按 ((n − 1) mod 12) + 1 归约后入数；12 是 6 的倍数，归约只缩短计数过程，不改变落宫。';
 
   const createdText = useMemo(() => {
     const date = new Date(result.createdAt);
@@ -59,7 +77,7 @@ export function SixResultPage({
   const handleShareCard = async () => {
     setShareState('正在本地生成分享卡片……');
     const blob = await renderShareCard({
-      inputSummary,
+      inputSummary: timeText,
       numbersText,
       metaLine: `${createdText} · 六宫传统起课`,
       palaces: interpretation.steps.map((reading) => ({
@@ -143,8 +161,13 @@ export function SixResultPage({
             </dd>
           </div>
           <div>
-            <dt>占测时辰</dt>
-            <dd data-testid="six-result-input-summary">{inputSummary}</dd>
+            <dt>{timeLabel}</dt>
+            <dd
+              className={numbersSource === 'calendar' ? undefined : 'mono-num'}
+              data-testid="six-result-input-summary"
+            >
+              {timeText}
+            </dd>
           </div>
           <div>
             <dt>起数</dt>
@@ -154,7 +177,7 @@ export function SixResultPage({
           </div>
           <div>
             <dt>取数说明</dt>
-            <dd>{numbersNote}</dd>
+            <dd data-testid="six-result-numbers-note">{numbersNoteText}</dd>
           </div>
           {calendar ? (
             <div>

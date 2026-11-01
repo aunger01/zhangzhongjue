@@ -34,6 +34,30 @@ function qa(selector: string): HTMLElement[] {
   return Array.from(container.querySelectorAll<HTMLElement>(selector));
 }
 
+/**
+ * 等待某个 testid 出现。
+ * 六宫视图 / 说明 / 解读均已改为按需加载，断言前必须给它若干轮微任务时间。
+ */
+async function waitFor<T extends HTMLElement>(testId: string, tries = 40): Promise<T> {
+  for (let i = 0; i < tries; i += 1) {
+    const element = container.querySelector<T>(`[data-testid="${testId}"]`);
+    if (element) return element;
+    // eslint-disable-next-line no-await-in-loop
+    await flush(2);
+  }
+  throw new Error(`等待超时：${testId}`);
+}
+
+/** 等待页面出现指定文案（用于懒加载后的说明弹层断言） */
+async function waitForText(text: string, tries = 40): Promise<void> {
+  for (let i = 0; i < tries; i += 1) {
+    if (container.textContent?.includes(text)) return;
+    // eslint-disable-next-line no-await-in-loop
+    await flush(2);
+  }
+  throw new Error(`等待文案超时：${text}`);
+}
+
 async function click(testId: string): Promise<void> {
   await act(async () => {
     q(testId).click();
@@ -304,12 +328,14 @@ describe('六宫小六壬（传统六宫法）', () => {
 
     await click('six-submit');
 
-    // 演算界面：六宫掌图只画六个宫位
+    // 演算界面：六宫掌图只画六个宫位（演算视图按需加载，先等就位）
+    await waitFor('six-btn-skip');
     expect(qa('[data-palace]')).toHaveLength(6);
 
     await click('six-btn-skip');
 
-    expect(q('result-card-month').getAttribute('data-palace')).toBe('赤口');
+    const monthCard = await waitFor('result-card-month');
+    expect(monthCard.getAttribute('data-palace')).toBe('赤口');
     expect(q('result-card-day').getAttribute('data-palace')).toBe('空亡');
     expect(q('result-card-hour').getAttribute('data-palace')).toBe('速喜');
     expect(q('six-result-origin').textContent).toContain('留连');
@@ -340,10 +366,12 @@ describe('六宫小六壬（传统六宫法）', () => {
     expect(q('six-preview').textContent).toContain('1、3、7');
 
     await click('six-submit');
+    await waitFor('six-btn-skip');
     await click('six-btn-skip');
 
     // 大安起课：月 (0+1-1)%6=0 大安；日 (0+3-1)%6=2 速喜；时 (2+7-1)%6=2 速喜
-    expect(q('result-card-month').getAttribute('data-palace')).toBe('大安');
+    const monthCard = await waitFor('result-card-month');
+    expect(monthCard.getAttribute('data-palace')).toBe('大安');
     expect(q('result-card-day').getAttribute('data-palace')).toBe('速喜');
     expect(q('result-card-hour').getAttribute('data-palace')).toBe('速喜');
   });
@@ -355,6 +383,8 @@ describe('六宫小六壬（传统六宫法）', () => {
       await flush(2);
     }
     await click('nav-rules');
+    // 六宫说明改为按需加载，等内容就位后再断言
+    await waitForText('六宫定义与掌位');
     const modal = q('modal');
     expect(modal.textContent).toContain('六宫定义与掌位');
     expect(modal.textContent).toContain('(startIndex + count - 1) % 6');
