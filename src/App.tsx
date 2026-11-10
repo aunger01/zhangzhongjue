@@ -387,6 +387,7 @@ export default function App() {
         mode={palaceMode}
         onSwitchMode={switchMode}
         minimal={view === 'gate'}
+        brandSubtitle={view === 'gate' ? '道门秘术' : undefined}
       />
 
       <main className="app__main">

@@ -25,6 +25,11 @@ export interface NavbarProps {
   onSwitchMode: () => void;
   /** 极简模式（门厅页）：隐藏玩法/规则/历史等页内入口，只留品牌钮与音效开关 */
   minimal?: boolean;
+  /**
+   * 品牌副标题。缺省随宫制显示「九宫小六壬 / 六宫小六壬」；
+   * 门厅尚无宫制可言，传入「道门秘术」，避免残留上一次进入的宫制名。
+   */
+  brandSubtitle?: string;
 }
 
 /**
@@ -70,6 +75,7 @@ export function Navbar({
   mode,
   onSwitchMode,
   minimal = false,
+  brandSubtitle,
 }: NavbarProps) {
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement | null>(null);
@@ -111,7 +117,10 @@ export function Navbar({
           </span>
           <span className="navbar__brand-text">
             <strong>掌中诀</strong>
-            <em>{mode === 'six' ? '六宫小六壬' : '九宫小六壬'}</em>
+            {/* 门厅副标题「道门秘术」四字撑满主标三字宽度，见 CSS .navbar__brand-sub--spread 注释 */}
+            <em className={minimal ? 'navbar__brand-sub--spread' : undefined}>
+              {brandSubtitle ?? (mode === 'six' ? '六宫小六壬' : '九宫小六壬')}
+            </em>
           </span>
         </button>
 

@@ -167,6 +167,25 @@ describe('门厅与首页', () => {
     expect(container.querySelector('[data-testid="nav-switch-mode"]')).toBeTruthy();
   });
 
+  it('导航品牌副标题：门厅「道门秘术」，入宫制后随线更名，退回门厅不复残留', async () => {
+    const subtitle = () => container.querySelector('.navbar__brand-text em')?.textContent ?? '';
+
+    // 门厅：尚无宫制可言
+    expect(subtitle()).toBe('道门秘术');
+
+    // 九宫线：随宫制更名；点左上角品牌钮回门厅后应还原「道门秘术」
+    await click('gate-nine');
+    expect(subtitle()).toBe('九宫小六壬');
+    await click('nav-home');
+    expect(subtitle()).toBe('道门秘术');
+
+    // 六宫线：同一路径亦须还原（此前会残留「六宫小六壬」）
+    await click('gate-six');
+    expect(subtitle()).toBe('六宫小六壬');
+    await click('nav-home');
+    expect(subtitle()).toBe('道门秘术');
+  });
+
   it('门厅：选六宫进入六宫首页（六宫掌图 + 时辰/心念两入口）', async () => {
     await click('gate-six');
 

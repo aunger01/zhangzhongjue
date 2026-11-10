@@ -68,6 +68,14 @@
   color: var(--text-faint);
 }
 
+/* 门厅副标题「道门秘术」（4 字）撑满主标「掌中诀」（3 字）的字面宽度，左右边缘对齐：
+   主标字面宽 = 3×18px + 2×0.2em(3.6px) = 61.2px；
+   副标字面宽 = 4×11px + 3×ls = 61.2px → ls ≈ 5.73px ≈ 0.52em。
+   两处字号若有改动，此处须同步重算；窄屏副标题整体隐藏，不受影响。 */
+.navbar__brand-text em.navbar__brand-sub--spread {
+  letter-spacing: 0.52em;
+}
+
 .navbar__links {
   display: flex;
   align-items: center;
