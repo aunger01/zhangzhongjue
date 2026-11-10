@@ -25,7 +25,7 @@ export interface SixResultPageProps {
   interpretation: SixInterpretation;
   inputSummary: string;
   numbersText: string;
-  /** 取数说明（农历月日时 / 自报三数与归约） */
+  /** 取数说明（农历月日时 / 自报三数与六宫周天取余） */
   numbersNote: string;
   calendar?: CalendarInfo | null;
   onReplay: () => void;

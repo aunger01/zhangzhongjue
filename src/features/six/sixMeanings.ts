@@ -30,6 +30,7 @@ import {
   type SixTopicId,
 } from './sixConstants';
 import type { SixResult } from './sixCalculate';
+import { sixReduceReportNumber } from './sixCalculate';
 
 /* ------------------------------------------------------------------ */
 /* 六宫专属合规文案（不用九宫版；免责全页只出现一次）                     */
@@ -364,13 +365,14 @@ function omenWord(omen: 'auspicious' | 'mixed' | 'inauspicious'): string {
 
 /** 1~10 数字释义（仅对 1~10 生效，其余数字只标阴阳吉凶属性） */
 export function sixNumberNote(value: number): string {
-  const text = SIX_NUMBER_MEANINGS[value];
-  // 阴阳按奇偶性判定（底本以 1~10 定义单阳双阴，对更大的自报数按奇偶自然推广；
-  // 归约公式 ((n−1) mod 12)+1 的模为偶数，raw 与归约后奇偶一致）
-  const odd = value % 2 === 1;
-  const parity = odd ? '单数为阳' : '双数为阴';
-  if (!text) return `${value}：${parity}，超出 1~10 释义范围，只取其阴阳属性。`;
-  return `${value}：${parity}，${text}。`;
+  // 释义按六宫周天取余后的入数取（1~6 必有底本释义）；
+  // 阴阳按原数奇偶（mod 6 为偶数模，原数与折算数奇偶一致，两说无冲突）。
+  const reduced = sixReduceReportNumber(value);
+  const text = SIX_NUMBER_MEANINGS[reduced];
+  const parity = value % 2 === 1 ? '单数为阳' : '双数为阴';
+  const label = reduced === value ? `${value}` : `${value}（折算 ${reduced}）`;
+  if (!text) return `${label}：${parity}，超出 1~10 释义范围，只取其阴阳属性。`;
+  return `${label}：${parity}，${text}。`;
 }
 
 /** 生成六宫完整解读 */

@@ -317,7 +317,7 @@ describe('六宫小六壬（传统六宫法）', () => {
     expect(container.textContent).toContain('六神断词');
   });
 
-  it('自报三数：归约后入数，落宫与直接入数一致', async () => {
+  it('自报三数：六宫周天取余折算后入数，落宫与直接入数一致', async () => {
     await click('nav-switch-mode');
     for (let i = 0; i < 20 && !container.querySelector('[data-testid="six-source-report"]'); i += 1) {
       // eslint-disable-next-line no-await-in-loop
@@ -337,12 +337,13 @@ describe('六宫小六壬（传统六宫法）', () => {
     await typeText('six-raw-1', '15');
     await typeText('six-raw-2', '7');
 
-    expect(q('six-preview').textContent).toContain('1、3、7');
+    expect(q('six-preview').textContent).toContain('1、3、1');
 
     await click('six-submit');
     await click('six-btn-skip');
 
-    // 大安起课：月 (0+1-1)%6=0 大安；日 (0+3-1)%6=2 速喜；时 (2+7-1)%6=2 速喜
+    // 大安起课，折算 13→1、15→3、7→1：月 (0+1-1)%6=0 大安；日 (0+3-1)%6=2 速喜；时 (2+1-1)%6=2 速喜
+    // （7 与 1 对 6 同余，落宫与直数 7 一致）
     expect(q('result-card-month').getAttribute('data-palace')).toBe('大安');
     expect(q('result-card-day').getAttribute('data-palace')).toBe('速喜');
     expect(q('result-card-hour').getAttribute('data-palace')).toBe('速喜');

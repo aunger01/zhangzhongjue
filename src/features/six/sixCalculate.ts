@@ -145,25 +145,24 @@ export function sixCalculateThreeSteps(
 }
 
 /* ------------------------------------------------------------------ */
-/* 变通取数：自报三数的归约                                              */
+/* 变通取数：自报三数的折算（六宫周天取余）                                */
 /* ------------------------------------------------------------------ */
 
-/** 自报三数允许的范围 */
+/** 自报三数下限（只收正整数） */
 export const SIX_REPORT_MIN = 1;
-export const SIX_REPORT_MAX = 99;
+/** 自报三数上限（大小不限，仅挡非安全整数） */
+export const SIX_REPORT_MAX = Number.MAX_SAFE_INTEGER;
 
 /**
- * 自报三数归约：任意大于 12 的数先归约到 1~12，再入数。
- *
- * 为什么归约不改变落宫：12 是 6 的倍数，
- *   ((n − 1) mod 12) + 1 − 1 ≡ n − 1 (mod 6)
- * 归约只压缩计数长度（让动画不至于数到 99 位），落宫与直接入数完全一致。
+ * 自报三数折算：六宫周天取余（民间通行 mod 6）——≤6 的数原样入数，
+ * >6 的数压到 1~6 再入数。落宫公式为 (起点 + 数 − 1) mod 6，
+ * 折算前后对 6 同余，故落宫与直接数原数完全一致；折算只缩短掌图计数路径。
  */
 export function sixReduceReportNumber(value: number): number {
   if (!Number.isInteger(value) || value < SIX_REPORT_MIN || value > SIX_REPORT_MAX) {
-    throw new Error(`自报之数必须为 ${SIX_REPORT_MIN} 至 ${SIX_REPORT_MAX} 的整数，收到：${String(value)}`);
+    throw new Error(`自报之数必须为正整数，收到：${String(value)}`);
   }
-  return ((value - 1) % 12) + 1;
+  return ((value - 1) % 6) + 1;
 }
 
 /* ------------------------------------------------------------------ */

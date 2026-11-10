@@ -24,7 +24,6 @@ import {
   sixPalaceIndex,
 } from '../features/six/sixConstants';
 import {
-  SIX_REPORT_MAX,
   SIX_REPORT_MIN,
   createSixResult,
   sixBuildPathIndices,
@@ -213,26 +212,37 @@ describe('🔴 黄金用例：《小六壬精华》原文例题', () => {
   });
 });
 
-describe('变通取数：自报三数的归约', () => {
-  it('归约到 1~12', () => {
+describe('变通取数：自报三数的折算（六宫周天取余）', () => {
+  it('折算到 1~6：≤6 原样，>6 取六宫余数', () => {
     expect(sixReduceReportNumber(1)).toBe(1);
-    expect(sixReduceReportNumber(12)).toBe(12);
+    expect(sixReduceReportNumber(6)).toBe(6);
+    expect(sixReduceReportNumber(7)).toBe(1);
+    expect(sixReduceReportNumber(12)).toBe(6);
     expect(sixReduceReportNumber(13)).toBe(1);
     expect(sixReduceReportNumber(99)).toBe(3);
+    expect(sixReduceReportNumber(100)).toBe(4);
+    expect(sixReduceReportNumber(365)).toBe(5);
   });
 
-  it('归约不改变落宫（12 是 6 的倍数）：全量比对 1~99', () => {
+  it('折算不改变落宫（mod 6 同余）：抽验 1~1000 与超大数', () => {
     for (let start = 0; start < SIX_PALACE_COUNT; start += 1) {
-      for (let value = SIX_REPORT_MIN; value <= SIX_REPORT_MAX; value += 1) {
+      for (let value = SIX_REPORT_MIN; value <= 1000; value += 1) {
         const reduced = sixReduceReportNumber(value);
         expect(sixCalculatePalace(start, reduced)).toBe(sixCalculatePalace(start, value));
+      }
+      for (const big of [999_999, 12_345_678, Number.MAX_SAFE_INTEGER]) {
+        const reduced = sixReduceReportNumber(big);
+        expect(reduced).toBeGreaterThanOrEqual(1);
+        expect(reduced).toBeLessThanOrEqual(6);
+        // 超大数用 BigInt 验同余（Number 运算在 2^53 附近失准，不可直接比落宫）
+        expect((BigInt(big) - 1n) % 6n).toBe(BigInt(reduced) - 1n);
       }
     }
   });
 
-  it('超出范围或非整数报错', () => {
+  it('非正整数或非整数报错', () => {
     expect(() => sixReduceReportNumber(0)).toThrow();
-    expect(() => sixReduceReportNumber(100)).toThrow();
+    expect(() => sixReduceReportNumber(-5)).toThrow();
     expect(() => sixReduceReportNumber(3.5)).toThrow();
   });
 
@@ -322,11 +332,13 @@ describe('六宫释义', () => {
     expect(sixElementRelation('木', '金')).toBe('other-controls');
   });
 
-  it('数字释义区分阴阳与 1~10 范围', () => {
+  it('数字释义按折算数取，标注折算来源', () => {
     expect(sixNumberNote(3)).toContain('单数为阳');
     expect(sixNumberNote(3)).toContain('吉祥');
     expect(sixNumberNote(4)).toContain('双数为阴');
-    expect(sixNumberNote(11)).toContain('超出 1~10 释义范围');
+    // 11 折算 5：释义取 5（禄寿），并标明折算
+    expect(sixNumberNote(11)).toContain('折算 5');
+    expect(sixNumberNote(11)).toContain('禄寿');
   });
 
   it('🔴 大于 10 的自报数按奇偶性判阴阳（15/27 为单数阳，非白名单误判）', () => {
@@ -336,9 +348,12 @@ describe('六宫释义', () => {
     expect(sixNumberNote(18)).toContain('双数为阴');
     expect(sixNumberNote(21)).toContain('单数为阳');
     expect(sixNumberNote(12)).toContain('双数为阴');
-    // 1~10 范围内判定不变
-    expect(sixNumberNote(7)).toContain('单数为阳');
-    expect(sixNumberNote(10)).toContain('双数为阴');
+    // 1~6 折算数等于原数，不带「折算」字样；7 以上即使 ≤10 也折算
+    expect(sixNumberNote(6)).not.toContain('折算');
+    expect(sixNumberNote(10)).toContain('折算 4');
+    // 折算数释义：15→3 吉祥、27→3、12→6 安稳
+    expect(sixNumberNote(15)).toContain('折算 3');
+    expect(sixNumberNote(12)).toContain('折算 6');
   });
 
   it('五行取事五条齐备', () => {

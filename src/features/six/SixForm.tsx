@@ -132,7 +132,7 @@ export function SixForm({ onSubmit }: SixFormProps) {
   const numbersNote =
     source === 'calendar'
       ? `农历${lunarMonthText(month, false)}${lunarDayText(day)} · ${shichenByNumber(hour).name}`
-      : `自报 ${raw[0]}、${raw[1]}、${raw[2]} → 归约 ${reducedReport.map((v) => v ?? '—').join('、')}`;
+      : `自报 ${raw[0]}、${raw[1]}、${raw[2]} → 六宫周天取余 ${reducedReport.map((v) => v ?? '—').join('、')}`;
 
   const numberNotes = source === 'report' ? raw.map((value) => sixNumberNote(value)) : [];
 
@@ -301,7 +301,6 @@ export function SixForm({ onSubmit }: SixFormProps) {
                   className="input mono-num"
                   type="number"
                   min={SIX_REPORT_MIN}
-                  max={SIX_REPORT_MAX}
                   value={raw[index]}
                   onChange={(event) => {
                     const next = Number(event.target.value);
@@ -318,16 +317,15 @@ export function SixForm({ onSubmit }: SixFormProps) {
           </div>
 
           <p className="faint">
-            任意取三个数（第一印象即可）：电话尾数、座位号、随手想到的数都行。
-            范围 {SIX_REPORT_MIN}～{SIX_REPORT_MAX}；大于 12 的数按{' '}
-            <span className="mono-num">((n − 1) mod 12) + 1</span> 归约后入数——
-            因 12 是 6 的倍数，归约只缩短计数过程，<strong>不改变落宫</strong>。
+            任意取三个数（第一印象即可）：电话尾数、座位号、随手想到的数都行，只收正整数、大小不限。
+            超过 6 的数按六宫周天取余折算到 1～6：<span className="mono-num">((n − 1) mod 6) + 1</span>——
+            报 15 折算 3，与数 15 步落同一宫，<strong>不改变落宫</strong>。
           </p>
 
           <div className={`notice ${reportValid ? 'notice--ok' : 'notice--error'}`} aria-live="polite">
             {reportValid
-              ? `归约后入数：${reducedReport.join('、')}`
-              : `三个数都须为 ${SIX_REPORT_MIN}～${SIX_REPORT_MAX} 的整数。`}
+              ? `折算后入数：${reducedReport.join('、')}`
+              : '三个数都须为正整数。'}
           </div>
         </>
       )}
