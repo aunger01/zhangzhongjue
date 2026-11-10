@@ -1,9 +1,15 @@
 /**
  * 六宫释义配置与解读合成
  *
- * 唯一底本：《小六壬精华》逐字转录（掌中诀网站开发/六宫小六壬_PDF原文转录.md）。
+ * 唯一底本：《小六壬精华》逐字转录，随仓库版本管理，见 `references/六宫小六壬_PDF原文转录.md`
+ * （仓库外备份 `掌中诀网站开发/六宫小六壬_PDF原文转录.md`，两份逐字一致）。
  * 所有断词、一句话象义、月日时取象、用神喜忌、五行取事、断课歌诀均引底本原文，
  * 不复用九宫（divination / interpretation）的任何释义内容。
+ * 纪律：凡改原文引用（断词/歌诀/数字释义），底稿与源码须同一次提交一并修正。
+ *
+ * 第二参考（仅文案，不参与计算）：应期参考（时限断）——速喜立见、大安约一周、
+ * 小吉约两周、留连停滞、空亡无可应期——出自倪海厦《天纪》课程公开讲授内容，
+ * 小六壬方法本身属传统公版知识，仅取其口径作解读文案，与底本断词互为参证。
  *
  * ⚠️ 纪律：本模块只解释已算出的宫位，绝不重算、不改宫位；
  * 对健康 / 财务 / 法律等高风险事项不作确定性结论，免责声明全页只出现一次。
@@ -80,7 +86,7 @@ export const SIX_PALACE_READINGS: Readonly<Record<SixPalaceName, SixPalaceReadin
   赤口: {
     summary: '官事凶：口舌是非，主事不利，办事宜缓。',
     asMonth: '月起赤口：「官非切要防」——起因多涉言语与规矩之争。',
-    asDay: '日临赤口：「行人有惊惶」——自身处于是非之中，沟通易生误会。',
+    asDay: '日临赤口：「行人有惊慌」——自身处于是非之中，沟通易生误会。',
     asHour: '时落赤口：「失物速速讨」——收束带争，宜及早处理，慎言慎约。',
     advice: ['赤口主争：「办事宜缓」，先降温再处理。', '重要约定落成文字，口头承诺补一句确认。'],
     cautions: ['赤口主口舌：少说多听，把情绪与事实分开。'],
@@ -88,9 +94,9 @@ export const SIX_PALACE_READINGS: Readonly<Record<SixPalaceName, SixPalaceReadin
   小吉: {
     summary: '人来喜：喜事到来，办事吉利，成功在望。',
     asMonth: '月起小吉：「路上好商量」——起因带和合之气，有人引荐帮忙。',
-    asDay: '日临小吉：「交易甚是强」——自身和顺，谈判交易有余地。',
-    asHour: '时落小吉：「凡事皆和合」——收束小而实，可以落定。',
-    advice: ['小吉主和：把话摆上桌面，商量成事。', '「交易甚是强」：谈得成，小成即安。'],
+    asDay: '日临小吉：「交关甚是强」——自身和顺，谈判交易有余地。',
+    asHour: '时落小吉：「凡事皆和谐」——收束小而实，可以落定。',
+    advice: ['小吉主和：把话摆上桌面，商量成事。', '「交关甚是强」：谈得成，小成即安。'],
     cautions: ['小吉主小成：别按大成来安排后手。'],
   },
   空亡: {
@@ -283,6 +289,26 @@ export const SIX_LUCKY_DAY_RULES: ReadonlyArray<string> = [
 ];
 
 /* ------------------------------------------------------------------ */
+/* 应期参考（时限断）                                                    */
+/* 口径出处：倪海厦《天纪》课程公开讲授（速喜立见 / 大安约一周 /          */
+/* 小吉约两周 / 留连停滞 / 空亡无可应期）。仅作文案参考，不参与落宫计算。  */
+/* ------------------------------------------------------------------ */
+
+/** 各宫时限断（按时宫即收束宫取用） */
+export const SIX_TIMELINE_NOTES: Readonly<Record<SixPalaceName, string>> = {
+  大安: '时宫落大安：约一周上下可见分晓。',
+  留连: '时宫落留连：事停滞不前，应期不明，久拖宜主动设期。',
+  速喜: '时宫落速喜：立竿见影，近期即有音信。',
+  赤口: '时宫落赤口：是非当下即现，无明确应期，宜先降温再处理。',
+  小吉: '时宫落小吉：约两周上下可见结果。',
+  空亡: '时宫落空亡：查无音信，无可应期，宜断念或另择时机再问。',
+};
+
+/** 时限断口径说明（结果页与规则说明各出现一次） */
+export const SIX_TIMELINE_SOURCE_NOTE =
+  '应期口径（时限断）参考倪海厦《天纪》课程公开讲授——速喜立见、大安约一周、小吉约两周、留连停滞、空亡无可应期——仅作解读参考，不参与落宫计算，与底本断词互为参证。';
+
+/* ------------------------------------------------------------------ */
 /* 解读合成                                                             */
 /* ------------------------------------------------------------------ */
 
@@ -315,6 +341,8 @@ export interface SixInterpretation {
   yongshen: SixYongshen;
   /** 六宫特有：三宫五行同类提示（未命中为空） */
   sameElementNote: string;
+  /** 六宫特有：应期参考（时限断，按时宫取用） */
+  timelineNote: string;
   /** 六宫特有：自报三数的数字释义 */
   numberNotes: string[];
   disclaimer: string;
@@ -425,6 +453,8 @@ export function sixComposeInterpretation(
       ? (SAME_ELEMENT_NOTES[monthMeta.element] ?? '')
       : '';
 
+  const timelineNote = `应期参考：${SIX_TIMELINE_NOTES[hourMeta.name as SixPalaceName]}`;
+
   const overall = [
     `本局以${result.input.originName}起课——${context.originLabel}；`,
     `月位落${monthMeta.name}、日位落${dayMeta.name}、时位落${hourMeta.name}；`,
@@ -508,6 +538,7 @@ export function sixComposeInterpretation(
     '【整体判断】',
     overall,
     combination,
+    timelineNote,
     '',
     '【逐步解析】',
     ...readings.map((reading) => `· ${reading.role}：${reading.text}`),
@@ -550,6 +581,7 @@ export function sixComposeInterpretation(
     topicVerses,
     yongshen,
     sameElementNote,
+    timelineNote,
     numberNotes: [...(context.numberNotes ?? [])],
     disclaimer: SIX_INTERPRETATION_DISCLAIMER,
     privacy: SIX_PRIVACY_NOTICE,

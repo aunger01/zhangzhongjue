@@ -14,6 +14,7 @@ import { ResultCard } from '../../components/ResultCard';
 import { SIX_ALGORITHM_NAME, SIX_ALGORITHM_VERSION, getSixPalaceMeta } from './sixConstants';
 import type { SixResult } from './sixCalculate';
 import type { SixInterpretation } from './sixMeanings';
+import { SIX_TIMELINE_SOURCE_NOTE } from './sixMeanings';
 import type { CalendarInfo } from '../divination/types';
 import { copyText, downloadBlob, renderShareCard } from '../share/shareCard';
 import '../../components/ResultPage.css';
@@ -190,6 +191,10 @@ export function SixResultPage({
           <h3 className="card__title">整体判断</h3>
           <p className="result__text">{interpretation.overall}</p>
           <p className="result__text">{interpretation.combination}</p>
+          <p className="result__text" data-testid="six-timeline-note">
+            {interpretation.timelineNote}
+          </p>
+          <p className="faint">{SIX_TIMELINE_SOURCE_NOTE}</p>
         </article>
 
         <article className="card six-result__verses">

@@ -429,7 +429,7 @@ describe('🔴 文案依转录底本：标点齐全、不复用九宫、免责�
     });
     // 逐字核对底本第 2 页小吉断词（圣上指出缺标点的那一条）
     expect(getSixPalaceMeta(4).verse.join('')).toBe(
-      '小吉最吉昌，路上好商量；阴人来报喜，失物在坤方；行人即便至，交易甚是强；凡事皆和合，病者祈上苍。',
+      '小吉最吉昌，路上好商量；阴人来报喜，失物在坤方；行人即便至，交关甚是强；凡事皆和谐，病者祈上苍。',
     );
   });
 
@@ -525,7 +525,7 @@ describe('🔴 文案依转录底本：标点齐全、不复用九宫、免责�
 
     expect(interpretation.steps.map((step) => step.palaceName)).toEqual(['赤口', '空亡', '速喜']);
     expect(interpretation.topicVerses).toHaveLength(3);
-    expect(interpretation.topicVerses[0].verse).toBe('财占赤口一口财，辛辛苦苦才能赚到');
+    expect(interpretation.topicVerses[0].verse).toBe('财占赤口一口财，辛辛苦苦才赚到');
     expect(interpretation.topicVerses[2].verse).toBe('财占速喜九分财，若要得全贵人帮');
     expect(interpretation.yongshen.palaceName).toBe('留连');
     expect(interpretation.yongshen.basis).toContain('以宫位取用神');
