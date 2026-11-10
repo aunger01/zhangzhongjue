@@ -1,0 +1,137 @@
+/*
+ * 门厅专属样式：宫制「散开—收拢」轮换特效（九宫 ↔ 六宫）。
+ * 编排：**掌身纹丝不动**，只动宫位格分组（.palace-cells）——
+ *       在位的宫牌旋转放大 + 模糊散去（gate-scatter-out），
+ *       新宫牌自散乱姿态旋转收拢、带轻微回弹落定（gate-assemble-in）。
+ * 方向交替：容器轮换时加 .gate-cycle--alt，经 --gate-rot-* 自定义属性翻转角度，
+ *           连续两轮旋转方向相反，不显机械。
+ * 注：本特效为装饰动效，依圣上钦定不受 prefers-reduced-motion 降级
+ *     （见文末对 globals.css 全局重置的窄豁免）；仅铭牌入场动画尊重该设置。
+ * 回退：把 GateView.tsx 的 GATE_PALM_CYCLE_ENABLED 置 false，此文件即不再生效。
+ */
+
+.gate-cycle {
+  --gate-rot-out: 9deg;
+  --gate-rot-in: -11deg;
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* 奇数轮：反向旋转 */
+.gate-cycle--alt {
+  --gate-rot-out: -9deg;
+  --gate-rot-in: 11deg;
+}
+
+.gate-cycle__layer {
+  width: 100%;
+  height: 100%;
+}
+
+/* 六宫层绝对定位叠放在九宫层之上；手形与九宫层完全重合，无碍 */
+.gate-cycle__layer--six {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* 宫位格分组：动画的真正主角。fill-box 让旋转/缩放以宫牌自身的包围盒为中心 */
+.gate-cycle__layer .palace-cells {
+  transform-box: fill-box;
+  transform-origin: center;
+  will-change: opacity, transform, filter;
+}
+
+/*
+ * 六宫层只保留宫牌：掌身轮廓与装饰线条由九宫层承担（两层手形几何完全同源）。
+ * 若不复此处隐去，六宫层的半透明掌体（palm-fill 0.9 / palm-shade 暗渐变 / hero 整体 0.92）
+ * 会叠在九宫宫牌之上，令九宫停下来发暗——此即「九宫偏暗」病灶的根治处。
+ */
+.gate-cycle__layer--six .palm-outline-group,
+.gate-cycle__layer--six .palm-decor-group {
+  visibility: hidden;
+}
+
+/* 六宫宫牌默认隐身（静态九宫态） */
+.gate-cycle .gate-cycle__layer--six .palace-cells {
+  opacity: 0;
+}
+
+/* ---- 在位宫牌 → 散去：旋转放大 + 模糊化，像宫牌被掌风拂散 ---- */
+@keyframes gate-scatter-out {
+  0% {
+    opacity: 1;
+    transform: rotate(0deg) scale(1) translateY(0);
+    filter: blur(0px);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--gate-rot-out)) scale(1.18) translateY(-10px);
+    filter: blur(8px);
+  }
+}
+
+/* ---- 散乱 → 收拢落定：反向旋入、模糊聚焦，末段轻微回弹 ---- */
+@keyframes gate-assemble-in {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--gate-rot-in)) scale(0.8) translateY(12px);
+    filter: blur(10px);
+  }
+  55% {
+    opacity: 1;
+    filter: blur(0px);
+  }
+  72% {
+    transform: rotate(1.5deg) scale(1.035) translateY(0);
+  }
+  100% {
+    opacity: 1;
+    transform: rotate(0deg) scale(1) translateY(0);
+    filter: blur(0px);
+  }
+}
+
+/* 散去 1.05s；收拢 1.42s 且略延迟起手——先见散开，再见收拢，层次分明。
+ * 只在 .gate-cycle--armed（首次轮换后）生效：挂载瞬间不演，杜绝首屏闪一下 */
+.gate-cycle--armed.is-nine .gate-cycle__layer--six .palace-cells,
+.gate-cycle--armed.is-six .gate-cycle__layer--nine .palace-cells {
+  animation: gate-scatter-out 1.05s cubic-bezier(0.45, 0, 0.55, 1) forwards;
+}
+
+.gate-cycle--armed.is-nine .gate-cycle__layer--nine .palace-cells,
+.gate-cycle--armed.is-six .gate-cycle__layer--six .palace-cells {
+  animation: gate-assemble-in 1.42s cubic-bezier(0.34, 1.2, 0.44, 1) 0.18s both;
+}
+
+/* 收拢落定后钉住终态，避免关键帧结束后闪烁 */
+.gate-cycle.is-six .gate-cycle__layer--six .palace-cells,
+.gate-cycle.is-nine .gate-cycle__layer--nine .palace-cells {
+  opacity: 1;
+}
+
+/* 宫制铭牌已撤（2026-11-10 圣上钦定）：掌下不留多余文案，
+ * 九宫／六宫之别由宫牌本身与入口卡文字承担。 */
+
+/* 宫牌特效依圣上钦定不受「减少动效」约束 */
+@media (prefers-reduced-motion: reduce) {
+  /*
+  /*
+   * 窄豁免：globals.css 有一条全局「减少动效」重置，把一切 animation-duration 压成 0.001ms
+   * （带 !important）。门厅的宫制轮换是内容必需——须让人看出九宫与六宫之别——
+   * 依圣上钦定在此单独恢复原时长，其余动画仍一律遵循全局策略。
+   */
+  .gate-cycle--armed.is-nine .gate-cycle__layer--nine .palace-cells,
+  .gate-cycle--armed.is-six .gate-cycle__layer--six .palace-cells {
+    animation-duration: 1.42s !important;
+    animation-delay: 0.18s !important;
+    animation-iteration-count: 1 !important;
+  }
+
+  .gate-cycle--armed.is-nine .gate-cycle__layer--six .palace-cells,
+  .gate-cycle--armed.is-six .gate-cycle__layer--nine .palace-cells {
+    animation-duration: 1.05s !important;
+    animation-iteration-count: 1 !important;
+  }
+}

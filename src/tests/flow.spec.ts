@@ -40,7 +40,7 @@ test.describe('首页', () => {
     const errors = watchErrors(page);
     await page.goto('/');
 
-    await expect(page.getByText('请先择宫制')).toBeVisible();
+    await expect(page.getByText('请选起宫之法')).toBeVisible();
     await expect(page.getByTestId('gate-nine')).toBeVisible();
     await expect(page.getByTestId('gate-six')).toBeVisible();
 

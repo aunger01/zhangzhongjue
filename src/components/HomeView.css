@@ -129,6 +129,17 @@
     column-gap: clamp(24px, 4vw, 56px);
   }
 
+  /*
+   * 桌机一屏适配（2026-11-10 圣上钦定）：
+   * 掌图 viewBox 420×664，宽撑到 520px 时掌高约 822px，连同标题与入口按钮必超一屏，
+   * 按钮被挤到折叠线下。按视窗高度反推掌图允许的最大宽度（掌高≈宽×1.581）：
+   * 视窗越高掌越大，够高时回到 520px 满尺寸；整掌等比缩，不裁切、宫位几何不动。
+   * 预算：导航 64 + 主区留白 ~46 + hero 留白 ≤96 + 入口按钮 ~110 + 收尾 20 + 页脚贴底 ≈ 356px。
+   */
+  .home__palm {
+    max-width: clamp(300px, calc((100dvh - 356px) * 0.6325), 520px);
+  }
+
   .home__intro {
     grid-area: intro;
   }
@@ -164,6 +175,30 @@
   .entry-card__label {
     font-size: 19px;
     letter-spacing: 0.16em;
+  }
+}
+
+/* ---------- 桌机矮视窗兜底（宽 ≤ 979px 之外另算）----------
+ * 宽屏笔电半屏、小窗口等情形：宽已缩到下限仍装不下时，
+ * 收紧上下留白，并按视窗高度裁去掌体下部（与移动端同一手法：
+ * 只削减占位高度，不缩放、不改宫位），底部 16px 渐隐柔化切口。
+ */
+
+@media (min-width: 980px) and (max-height: 900px) {
+  .home__hero {
+    padding: 18px 0 12px;
+  }
+
+  .home__entries {
+    margin-top: 12px;
+  }
+
+  .home__palm {
+    max-width: clamp(240px, calc((100dvh - 268px) * 0.6325), 520px);
+    max-height: calc(100dvh - 268px);
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 16px), transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 16px), transparent 100%);
   }
 }
 

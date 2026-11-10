@@ -98,6 +98,19 @@ export default function App() {
     root.dataset.motion = prefersReducedMotion ? 'reduced' : 'normal';
   }, [prefersReducedMotion]);
 
+  /* ---------- 浏览器标签页标题随视图切换 ----------
+   * 门厅 → 道门秘术 · 掌中诀（2026-11-10 圣上钦定）；
+   * 入宫制后按线标注宫制，深层页（起课 / 结果）跟随所属线，
+   * 便于浏览器历史记录中一眼分辨九宫与六宫两线。 */
+  useEffect(() => {
+    document.title =
+      view === 'gate'
+        ? '道门秘术 · 掌中诀'
+        : view.startsWith('six')
+          ? '掌中诀 · 六宫小六壬'
+          : '掌中诀 · 九宫小六壬';
+  }, [view]);
+
   /* ---------- 历史记录初始化（仅本地） ---------- */
   useEffect(() => {
     setHistory(loadHistory());

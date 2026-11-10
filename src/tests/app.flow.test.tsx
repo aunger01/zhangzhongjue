@@ -96,9 +96,13 @@ afterEach(async () => {
 describe('门厅与首页', () => {
   it('门厅：同一场景先择宫制，选九宫进入原首页（主标题、两种入口与九个指节宫位）', async () => {
     // 初始为门厅：两张宫制入口
-    expect(container.textContent).toContain('请先择宫制');
+    expect(container.textContent).toContain('请选起宫之法');
     expect(container.querySelector('[data-testid="gate-nine"]')).toBeTruthy();
     expect(container.querySelector('[data-testid="gate-six"]')).toBeTruthy();
+
+    // 宫制轮换：九宫、六宫两层掌图同挂（交叉淡入淡出，jsdom 下断言层结构）
+    expect(container.querySelectorAll('.gate-cycle__layer')).toHaveLength(2);
+    expect(container.querySelector('[data-testid="gate-palm-cycle"]')).toBeTruthy();
 
     await click('gate-nine');
 
