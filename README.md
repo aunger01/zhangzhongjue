@@ -435,15 +435,13 @@ npm run preview    # 本地验证构建产物
 
 - **主站（现行）**：`https://dao.l1n2.com/`（Cloudflare Workers，推 `main` 自动重建）
 - 备用站：本仓库 Pages（`main` 分支 `/docs` 目录发布），仅自用，不对外公开
-- 单文件版：`docs/standalone.html`（可直接下载后双击运行）
+- ~~单文件版~~：已于 2026-11-10 撤除（`docs/standalone.html` 删除）；如需离线版，本地跑 `npm run build:offline` 即得 `dist-offline/`
 
 仓库只收源码（`dist/` 不入库），所以 **Pages 不能指向仓库根目录**：根目录的 `index.html` 是 Vite 源码入口，引用的是未编译的 `/src/main.tsx`，直接发布出去浏览器拿到 TSX 源码会一片白屏。因此仓库额外维护一个 `docs/` 发布目录：
 
 ```bash
 npm run build                                   # 1. 产出 dist/
 rm -rf docs && cp -r dist docs && touch docs/.nojekyll   # 2. 同步到 docs/（.nojekyll 防 Jekyll 处理）
-npm run build:single                            # 3. 重建单文件版
-cp "dist-offline/掌中诀-单文件版.html" docs/standalone.html
 ```
 
 Pages 设置路径：仓库 **Settings → Pages → Build and deployment**，Source 选 *Deploy from a branch*，Branch 选 `main`、目录选 **`/docs`** → Save。
