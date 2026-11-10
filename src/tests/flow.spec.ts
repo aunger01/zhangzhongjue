@@ -20,6 +20,7 @@ function watchErrors(page: Page): string[] {
 /** 走完"生辰 → 农历五月二十日 → 丑时"的输入流程，停在预览页 */
 async function fillAcceptanceInput(page: Page) {
   await page.goto('/');
+    await page.getByTestId('gate-nine').click();
   await expect(page.getByTestId('entry-birth')).toBeVisible();
   await page.getByTestId('entry-birth').click();
 
@@ -35,9 +36,30 @@ async function fillAcceptanceInput(page: Page) {
 }
 
 test.describe('首页', () => {
+  test('门厅先行：同一场景先择宫制（九宫 / 六宫两张入口）', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/');
+
+    await expect(page.getByText('请先择宫制')).toBeVisible();
+    await expect(page.getByTestId('gate-nine')).toBeVisible();
+    await expect(page.getByTestId('gate-six')).toBeVisible();
+
+    // 选六宫 → 六宫首页（六宫掌图 + 取数方式入口）
+    await page.getByTestId('gate-six').click();
+    await expect(page.getByTestId('six-entry-calendar')).toBeVisible();
+    await expect(page.getByTestId('six-entry-report')).toBeVisible();
+
+    // 时辰起卦 → 起课表单
+    await page.getByTestId('six-entry-calendar').click();
+    await expect(page.getByTestId('six-basis')).toBeVisible();
+
+    expect(errors).toEqual([]);
+  });
+
   test('主视觉与入口齐全，掌位图包含九个指节', async ({ page }) => {
     const errors = watchErrors(page);
     await page.goto('/');
+    await page.getByTestId('gate-nine').click();
 
     await expect(page.getByRole('heading', { level: 1 })).toContainText('一念既起');
     await expect(page.getByText('以时取数，以掌推演')).toBeVisible();
@@ -59,6 +81,7 @@ test.describe('首页', () => {
 
   test('玩法说明与规则说明可打开并公开算法与文字取数规则', async ({ page }) => {
     await page.goto('/');
+    await page.getByTestId('gate-nine').click();
     await page.getByTestId('nav-rules').click();
     const modal = page.getByTestId('modal');
     await expect(modal).toBeVisible();
@@ -193,6 +216,7 @@ test.describe('文字心念起卦', () => {
   test('空白不可提交，输入后起数并完成占测', async ({ page }) => {
     const errors = watchErrors(page);
     await page.goto('/');
+    await page.getByTestId('gate-nine').click();
     await page.getByTestId('entry-text').click();
 
     // 空白不可提交
@@ -221,6 +245,7 @@ test.describe('文字心念起卦', () => {
 
   test('标点与空格不影响起数（规范化后一致）', async ({ page }) => {
     await page.goto('/');
+    await page.getByTestId('gate-nine').click();
     await page.getByTestId('entry-text').click();
     await page.getByTestId('text-input').fill('问前程');
     const plain = await page.getByTestId('text-numbers').locator('strong').textContent();
@@ -234,6 +259,7 @@ test.describe('文字心念起卦', () => {
 test.describe('历法输入', () => {
   test('公历输入实时换算为农历并展示起数', async ({ page }) => {
     await page.goto('/');
+    await page.getByTestId('gate-nine').click();
     await page.getByTestId('entry-birth').click();
     await page.getByTestId('solar-year').selectOption('2026');
     await page.getByTestId('solar-month').selectOption('7');
@@ -248,6 +274,7 @@ test.describe('历法输入', () => {
 
   test('切换公历/农历不会被重新解释，且给出明确提示', async ({ page }) => {
     await page.goto('/');
+    await page.getByTestId('gate-nine').click();
     await page.getByTestId('entry-birth').click();
     await page.getByTestId('solar-year').selectOption('1995');
     await page.getByTestId('kind-lunar').click();
@@ -259,6 +286,7 @@ test.describe('历法输入', () => {
 
   test('闰月标识仅在该年确有该闰月时可选', async ({ page }) => {
     await page.goto('/');
+    await page.getByTestId('gate-nine').click();
     await page.getByTestId('entry-birth').click();
     await page.getByTestId('kind-lunar').click();
 
@@ -276,6 +304,7 @@ test.describe('历法输入', () => {
 
   test('超出支持范围的公历年份不出现于选项中', async ({ page }) => {
     await page.goto('/');
+    await page.getByTestId('gate-nine').click();
     await page.getByTestId('entry-birth').click();
     // 生辰表单为按需加载，先等待其渲染完成
     await expect(page.getByTestId('solar-year')).toBeVisible();
@@ -303,6 +332,7 @@ test.describe('移动端布局', () => {
   test('不出现横向滚动条，关键元素可见可点', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/');
+    await page.getByTestId('gate-nine').click();
 
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
@@ -350,6 +380,7 @@ test.describe('结果可复现性', () => {
 
   test('历史记录入口可打开，声明本地保存', async ({ page }) => {
     await page.goto('/');
+    await page.getByTestId('gate-nine').click();
     await page.getByTestId('nav-history').click();
     const modal = page.getByTestId('modal');
     await expect(modal).toContainText('localStorage');

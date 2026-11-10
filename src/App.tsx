@@ -1,11 +1,12 @@
 /**
  * 掌中诀 · 应用外壳
  *
- * 负责视图切换与"演算会话"的编排。两条玩法线并存、互不干扰：
+ * 负责视图切换与"演算会话"的编排。门厅先行、两条玩法线并存、互不干扰：
  *
+ *   门厅：GATE（宫制选择：九宫 / 六宫）——顶部品牌钮随时回到这里
  *   九宫线：HOME → INPUT（生辰 / 文字）→ READY → ANIMATING ⇄ PAUSED
  *                                        → STEP_COMPLETE → FINAL_RESULT（结果页）
- *   六宫线：SIX_FORM → SIX_SESSION（同一套状态机）→ SIX_RESULT
+ *   六宫线：SIX_HOME（时辰/心念）→ SIX_FORM → SIX_SESSION（同一套状态机）→ SIX_RESULT
  *
  * 两条线各持一台状态机、各自冻结结果；宫制由右上角入口切换。
  * 演算开始后本次结果对象被冻结，所有控件只改变"观看方式"。
@@ -13,6 +14,7 @@
 
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Navbar } from './components/Navbar';
+import { GateView } from './components/GateView';
 import { HomeView } from './components/HomeView';
 import { SessionView } from './components/SessionView';
 import { ResultPage } from './components/ResultPage';
@@ -22,8 +24,9 @@ import type { BirthSubmission } from './features/birth/BirthForm';
 import { TextForm, type TextSubmission } from './features/text/TextForm';
 import type { SixSubmission } from './features/six/SixForm';
 import { SixSessionView } from './features/six/SixSessionView';
+import { SixHomeView } from './features/six/SixHomeView';
 import { SixResultPage } from './features/six/SixResultPage';
-import { createSixResult, type SixResult } from './features/six/sixCalculate';
+import { createSixResult, type SixNumbersSource, type SixResult } from './features/six/sixCalculate';
 import { sixComposeInterpretation } from './features/six/sixMeanings';
 import { SIX_PALACES } from './features/six/sixConstants';
 import { SHICHEN } from './features/birth/timeMapping';
@@ -45,7 +48,7 @@ import type { CalendarInfo, DivinationMode } from './features/divination/types';
 import type { StrokeNumberingDetail } from './features/text/strokeNumbering';
 import './App.css';
 
-type View = 'home' | 'birth' | 'text' | 'session' | 'result' | 'six-form' | 'six-session' | 'six-result';
+type View = 'gate' | 'home' | 'birth' | 'text' | 'session' | 'result' | 'six-home' | 'six-form' | 'six-session' | 'six-result';
 
 type PalaceMode = 'nine' | 'six';
 
@@ -77,7 +80,8 @@ export default function App() {
   const { state: machineState, actions } = machine;
   const { state: sixState, actions: sixActions } = sixMachine;
 
-  const [view, setView] = useState<View>('home');
+  /* 初始停在门厅：先择宫制（九宫 / 六宫），再入各自玩法线 */
+  const [view, setView] = useState<View>('gate');
   const [palaceMode, setPalaceMode] = useState<PalaceMode>('nine');
   const [pending, setPending] = useState<PendingInput | null>(null);
   const [sixPending, setSixPending] = useState<SixSubmission | null>(null);
@@ -230,19 +234,40 @@ export default function App() {
     return window.confirm(message);
   }, []);
 
+  /* 品牌钮：回到门厅（宫制选择页）。演算进行中先确认丢弃。 */
   const goHome = useCallback(() => {
-    if (palaceMode === 'six') {
-      if (sixBusy && !confirmDiscard('六宫演算进行中，返回将清空当前进度，确定返回吗？')) return;
-      sixActions.clear();
-      setSixPending(null);
-      setView('six-form');
-      return;
-    }
-    if (nineBusy && !confirmDiscard('演算进行中，返回首页将清空当前进度，确定返回吗？')) return;
+    if (view === 'gate') return;
+    if (busy && !confirmDiscard('演算进行中，返回将清空当前进度，确定返回吗？')) return;
     actions.clear();
+    sixActions.clear();
     setPending(null);
+    setSixPending(null);
+    setView('gate');
+  }, [actions, busy, confirmDiscard, sixActions, view]);
+
+  /* ---------- 门厅：宫制分流 ---------- */
+  const handleGateSelectNine = useCallback(() => {
+    setPalaceMode('nine');
     setView('home');
-  }, [actions, confirmDiscard, nineBusy, palaceMode, sixActions, sixBusy]);
+  }, []);
+
+  const handleGateSelectSix = useCallback(() => {
+    setPalaceMode('six');
+    setView('six-home');
+  }, []);
+
+  /* ---------- 六宫首页：取数方式分流（时辰起卦 / 心念起卦） ---------- */
+  const [sixInitialSource, setSixInitialSource] = useState<SixNumbersSource>('calendar');
+
+  const handleSixHomeSelectCalendar = useCallback(() => {
+    setSixInitialSource('calendar');
+    setView('six-form');
+  }, []);
+
+  const handleSixHomeSelectReport = useCallback(() => {
+    setSixInitialSource('report');
+    setView('six-form');
+  }, []);
 
   const switchMode = useCallback(() => {
     const next: PalaceMode = palaceMode === 'six' ? 'nine' : 'six';
@@ -310,9 +335,18 @@ export default function App() {
         busy={busy}
         mode={palaceMode}
         onSwitchMode={switchMode}
+        minimal={view === 'gate'}
       />
 
       <main className="app__main">
+        {view === 'gate' ? (
+          <GateView
+            onSelectNine={handleGateSelectNine}
+            onSelectSix={handleGateSelectSix}
+            reducedMotion={prefersReducedMotion}
+          />
+        ) : null}
+
         {view === 'home' ? (
           <HomeView
             onSelectBirth={() => setView('birth')}
@@ -335,10 +369,18 @@ export default function App() {
           </div>
         ) : null}
 
+        {view === 'six-home' ? (
+          <SixHomeView
+            onSelectCalendar={handleSixHomeSelectCalendar}
+            onSelectReport={handleSixHomeSelectReport}
+            reducedMotion={prefersReducedMotion}
+          />
+        ) : null}
+
         {view === 'six-form' ? (
           <div className="container app__form-view">
             <Suspense fallback={<p className="notice">正在加载六宫起课模块……</p>}>
-              <SixForm onSubmit={handleSixSubmit} />
+              <SixForm onSubmit={handleSixSubmit} initialSource={sixInitialSource} />
             </Suspense>
           </div>
         ) : null}
@@ -419,7 +461,7 @@ export default function App() {
             onNewDivination={() => {
               sixActions.clear();
               setSixPending(null);
-              setView('six-form');
+              setView('six-home');
             }}
           />
         ) : null}

@@ -93,8 +93,15 @@ afterEach(async () => {
   container.remove();
 });
 
-describe('首页', () => {
-  it('渲染主标题、两种入口与九个指节宫位', () => {
+describe('门厅与首页', () => {
+  it('门厅：同一场景先择宫制，选九宫进入原首页（主标题、两种入口与九个指节宫位）', async () => {
+    // 初始为门厅：两张宫制入口
+    expect(container.textContent).toContain('请先择宫制');
+    expect(container.querySelector('[data-testid="gate-nine"]')).toBeTruthy();
+    expect(container.querySelector('[data-testid="gate-six"]')).toBeTruthy();
+
+    await click('gate-nine');
+
     expect(container.textContent).toContain('一念既起');
     expect(container.textContent).toContain('以时取数，以掌推演');
     expect(container.querySelector('[data-testid="entry-birth"]')).toBeTruthy();
@@ -117,10 +124,62 @@ describe('首页', () => {
       '天德',
     ]);
   });
+
+  it('门厅：导航栏极简（页内入口隐藏），入九宫后恢复', async () => {
+    // 门厅页：玩法/规则/历史/切换/更多全部不渲染，音效开关保留
+    expect(container.querySelector('[data-testid="nav-rules"]')).toBeNull();
+    expect(container.querySelector('[data-testid="nav-play"]')).toBeNull();
+    expect(container.querySelector('[data-testid="nav-history"]')).toBeNull();
+    expect(container.querySelector('[data-testid="nav-switch-mode"]')).toBeNull();
+    expect(container.querySelector('[data-testid="nav-more"]')).toBeNull();
+    expect(container.querySelector('[data-testid="sound-toggle"]')).toBeTruthy();
+
+    await click('gate-nine');
+    expect(container.querySelector('[data-testid="nav-rules"]')).toBeTruthy();
+    expect(container.querySelector('[data-testid="nav-switch-mode"]')).toBeTruthy();
+  });
+
+  it('门厅：选六宫进入六宫首页（六宫掌图 + 时辰/心念两入口）', async () => {
+    await click('gate-six');
+
+    // 六宫首页：同一场景骨架，两张取数方式入口
+    expect(container.textContent).toContain('六宫小六壬');
+    expect(container.textContent).toContain('时辰起卦');
+    expect(container.textContent).toContain('心念起卦');
+    expect(container.querySelector('[data-testid="six-entry-calendar"]')).toBeTruthy();
+    expect(container.querySelector('[data-testid="six-entry-report"]')).toBeTruthy();
+    // 掌图为六宫布局
+    expect(qa('[data-palace]')).toHaveLength(6);
+
+    // 时辰起卦 → 起课表单，默认选中农历月日时
+    await click('six-entry-calendar');
+    for (let i = 0; i < 20 && !container.querySelector('[data-testid="six-basis"]'); i += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      await flush(2);
+    }
+    expect(container.querySelector('[data-testid="six-basis"]')).toBeTruthy();
+    // 取数方式为分段按钮（aria-pressed），时辰入口应选中「农历月日时」
+    expect(q('six-source-calendar').getAttribute('aria-pressed')).toBe('true');
+    expect(q('six-source-report').getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('门厅：六宫首页「心念起卦」预选自报三数', async () => {
+    await click('gate-six');
+    await click('six-entry-report');
+    for (let i = 0; i < 20 && !container.querySelector('[data-testid="six-basis"]'); i += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      await flush(2);
+    }
+    // 心念入口带入：取数方式预选「自报三数」
+    expect(q('six-source-report').getAttribute('aria-pressed')).toBe('true');
+    expect(q('six-source-calendar').getAttribute('aria-pressed')).toBe('false');
+    expect(q('six-preview').textContent).toContain('六宫周天取余');
+  });
 });
 
 describe('文字心念起卦完整流程', () => {
   it('空白不可提交；输入后起数并与预览、结果一致', async () => {
+    await click('gate-nine');
     await click('entry-text');
 
     const submit = q<HTMLButtonElement>('text-submit');
@@ -154,6 +213,7 @@ describe('文字心念起卦完整流程', () => {
 
 describe('🔴 生辰起卦：农历五月二十日、丑时，起数 5、20、2', () => {
   it('经真实历法换算与九宫算法得到 小吉 / 空亡 / 病符', async () => {
+    await click('gate-nine');
     await click('entry-birth');
 
     // 生辰表单为按需加载，等待其出现
@@ -185,6 +245,7 @@ describe('🔴 生辰起卦：农历五月二十日、丑时，起数 5、20、2
   });
 
   it('公历 2026-07-04 换算为农历五月二十日（交叉验证）', async () => {
+    await click('gate-nine');
     await click('entry-birth');
     for (let i = 0; i < 20 && !container.querySelector('[data-testid="solar-year"]'); i += 1) {
       // eslint-disable-next-line no-await-in-loop
@@ -201,6 +262,7 @@ describe('🔴 生辰起卦：农历五月二十日、丑时，起数 5、20、2
 
 describe('说明弹层', () => {
   it('规则说明公开九宫对照、公式与文字取数法', async () => {
+    await click('gate-nine');
     await click('nav-rules');
     const modal = q('modal');
     expect(modal.textContent).toContain('九宫定义');
@@ -212,6 +274,7 @@ describe('说明弹层', () => {
   });
 
   it('无障碍：打开即聚焦对话框，Tab 循环不出弹层，Esc 关闭后焦点归还触发元素', async () => {
+    await click('gate-nine');
     const trigger = q('nav-rules');
     await act(async () => {
       trigger.focus();
@@ -258,6 +321,7 @@ describe('说明弹层', () => {
 describe('六宫小六壬（传统六宫法）', () => {
   it('右上角可切换到六宫，起课表单按需加载', async () => {
     expect(container.textContent).toContain('九宫小六壬');
+    await click('gate-nine');
     await click('nav-switch-mode');
 
     for (let i = 0; i < 20 && !container.querySelector('[data-testid="six-basis"]'); i += 1) {
@@ -282,6 +346,7 @@ describe('六宫小六壬（传统六宫法）', () => {
   });
 
   it('🔴 占人女例：留连起课，三月初三卯时 → 赤口 / 空亡 / 速喜（与原文一致）', async () => {
+    await click('gate-nine');
     await click('nav-switch-mode');
     for (let i = 0; i < 20 && !container.querySelector('[data-testid="six-basis"]'); i += 1) {
       // eslint-disable-next-line no-await-in-loop
@@ -318,6 +383,7 @@ describe('六宫小六壬（传统六宫法）', () => {
   });
 
   it('自报三数：六宫周天取余折算后入数，落宫与直接入数一致', async () => {
+    await click('gate-nine');
     await click('nav-switch-mode');
     for (let i = 0; i < 20 && !container.querySelector('[data-testid="six-source-report"]'); i += 1) {
       // eslint-disable-next-line no-await-in-loop
@@ -350,6 +416,7 @@ describe('六宫小六壬（传统六宫法）', () => {
   });
 
   it('六宫规则说明公开六宫对照、公式与起课歌诀', async () => {
+    await click('gate-nine');
     await click('nav-switch-mode');
     for (let i = 0; i < 20 && !container.querySelector('[data-testid="six-basis"]'); i += 1) {
       // eslint-disable-next-line no-await-in-loop
@@ -368,6 +435,7 @@ describe('六宫小六壬（传统六宫法）', () => {
   });
 
   it('六宫各页不出现「返回九宫」按钮；切换入口带切换图标', async () => {
+    await click('gate-nine');
     await click('nav-switch-mode');
     for (let i = 0; i < 20 && !container.querySelector('[data-testid="six-basis"]'); i += 1) {
       // eslint-disable-next-line no-await-in-loop
@@ -378,6 +446,7 @@ describe('六宫小六壬（传统六宫法）', () => {
   });
 
   it('求财例：结果页引断课歌诀（财占），并给出用神喜忌', async () => {
+    await click('gate-nine');
     await click('nav-switch-mode');
     for (let i = 0; i < 20 && !container.querySelector('[data-testid="six-basis"]'); i += 1) {
       // eslint-disable-next-line no-await-in-loop

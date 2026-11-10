@@ -48,6 +48,8 @@ export interface SixSubmission {
 
 export interface SixFormProps {
   onSubmit: (submission: SixSubmission) => void;
+  /** 初始取数方式：六宫首页「时辰起卦 / 心念起卦」入口带入；缺省时辰（农历月日时） */
+  initialSource?: SixNumbersSource;
 }
 
 /** 起宫依据的选项值：topic:<id> / person:male|female */
@@ -97,10 +99,10 @@ function currentMoment(): { month: number; day: number; hour: number; calendar: 
   }
 }
 
-export function SixForm({ onSubmit }: SixFormProps) {
+export function SixForm({ onSubmit, initialSource = 'calendar' }: SixFormProps) {
   const initial = useMemo(() => currentMoment(), []);
   const [basis, setBasis] = useState<BasisValue | ''>('');
-  const [source, setSource] = useState<SixNumbersSource>('calendar');
+  const [source, setSource] = useState<SixNumbersSource>(initialSource);
   const [month, setMonth] = useState(initial.month);
   const [day, setDay] = useState(initial.day);
   const [hour, setHour] = useState(initial.hour);

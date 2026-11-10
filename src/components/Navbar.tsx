@@ -4,6 +4,7 @@
  * 宽屏：项目名 · 玩法说明 · 规则说明 · 历史记录 · 音效开关
  * 窄屏（≤760px）：项目名 · 音效开关 · 更多 —— 三个入口收进「更多」下拉菜单，
  * 避免导航栏挤占首页一屏空间。
+ * 门厅页（minimal）只留品牌钮与音效开关：玩法/规则/历史/宫制切换均为九宫、六宫页内之物。
  */
 
 import { useEffect, useRef, useState } from 'react';
@@ -22,6 +23,8 @@ export interface NavbarProps {
   mode: 'nine' | 'six';
   /** 切换到另一宫制 */
   onSwitchMode: () => void;
+  /** 极简模式（门厅页）：隐藏玩法/规则/历史等页内入口，只留品牌钮与音效开关 */
+  minimal?: boolean;
 }
 
 /**
@@ -66,6 +69,7 @@ export function Navbar({
   busy,
   mode,
   onSwitchMode,
+  minimal = false,
 }: NavbarProps) {
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement | null>(null);
@@ -112,55 +116,58 @@ export function Navbar({
         </button>
 
         <nav className="navbar__links" aria-label="主导航">
-          {/* 宽屏横向入口；窄屏整体收进「更多」菜单 */}
-          <div className="navbar__group">
-            <button
-              type="button"
-              className="btn btn--sm navbar__switch"
-              onClick={onSwitchMode}
-              data-testid="nav-switch-mode"
-              title={
-                mode === 'six'
-                  ? '切换到九宫小六壬（九宫：大安至天德）'
-                  : '切换到六宫小六壬（传统六宫：大安至空亡）'
-              }
-            >
-              {mode === 'six' ? (
-                <>
-                  <SwitchIcon />
-                  九宫小六壬
-                </>
-              ) : (
-                <>
-                  <SwitchIcon />
-                  六宫小六壬
-                </>
-              )}
-            </button>
-            <button
-              type="button"
-              className="btn btn--sm btn--ghost"
-              onClick={onOpenPlayGuide}
-              data-testid="nav-play"
-            >
-              玩法说明
-            </button>
-            <button type="button" className="btn btn--sm btn--ghost" onClick={onOpenRules} data-testid="nav-rules">
-              规则说明
-            </button>
-            <button
-              type="button"
-              className="btn btn--sm btn--ghost"
-              onClick={onOpenHistory}
-              data-testid="nav-history"
-            >
-              历史记录
-              {historyCount > 0 ? <span className="navbar__count mono-num">{historyCount}</span> : null}
-            </button>
+          {/* 宽屏横向入口；窄屏整体收进「更多」菜单。门厅页（minimal）不渲染页内入口 */}
+          {!minimal ? (
+            <div className="navbar__group">
+                <button
+                  type="button"
+                  className="btn btn--sm navbar__switch"
+                  onClick={onSwitchMode}
+                  data-testid="nav-switch-mode"
+                  title={
+                    mode === 'six'
+                      ? '切换到九宫小六壬（九宫：大安至天德）'
+                      : '切换到六宫小六壬（传统六宫：大安至空亡）'
+                  }
+                >
+                  {mode === 'six' ? (
+                    <>
+                      <SwitchIcon />
+                      九宫小六壬
+                    </>
+                  ) : (
+                    <>
+                      <SwitchIcon />
+                      六宫小六壬
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn--sm btn--ghost"
+                  onClick={onOpenPlayGuide}
+                  data-testid="nav-play"
+                >
+                  玩法说明
+                </button>
+                <button type="button" className="btn btn--sm btn--ghost" onClick={onOpenRules} data-testid="nav-rules">
+                  规则说明
+                </button>
+                <button
+                  type="button"
+                  className="btn btn--sm btn--ghost"
+                  onClick={onOpenHistory}
+                  data-testid="nav-history"
+                >
+                  历史记录
+                  {historyCount > 0 ? <span className="navbar__count mono-num">{historyCount}</span> : null}
+                </button>
           </div>
+          ) : null}
 
           <SoundToggle />
 
+          {minimal ? null : (
           <div className="navbar__more" ref={moreRef}>
             <button
               type="button"
@@ -205,6 +212,7 @@ export function Navbar({
               </div>
             ) : null}
           </div>
+          )}
         </nav>
       </div>
       {busy ? <span className="faint navbar__hint">演算进行中：返回首页会清空当前进度</span> : null}
