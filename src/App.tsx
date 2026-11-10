@@ -23,12 +23,9 @@ import { HistoryDrawer } from './components/HistoryDrawer';
 import type { BirthSubmission } from './features/birth/BirthForm';
 import { TextForm, type TextSubmission } from './features/text/TextForm';
 import type { SixSubmission } from './features/six/SixForm';
-import { SixSessionView } from './features/six/SixSessionView';
+import type { SixResult, SixNumbersSource } from './features/six/sixCalculate';
+import type { SixInterpretation } from './features/six/sixMeanings';
 import { SixHomeView } from './features/six/SixHomeView';
-import { SixResultPage } from './features/six/SixResultPage';
-import { createSixResult, type SixNumbersSource, type SixResult } from './features/six/sixCalculate';
-import { sixComposeInterpretation } from './features/six/sixMeanings';
-import { SIX_PALACES } from './features/six/sixConstants';
 import { SHICHEN } from './features/birth/timeMapping';
 import { createDivinationResult } from './features/divination/calculate';
 import { PALACES } from './features/divination/palaceConstants';
@@ -62,6 +59,19 @@ const BirthForm = lazy(() =>
 
 const SixForm = lazy(() =>
   import('./features/six/SixForm').then((module) => ({ default: module.SixForm })),
+);
+
+/**
+ * 六宫解读链（演算视图 / 结果页 / 解读数据）同样按需加载：
+ * 九宫用户全程不会下载六宫的宫位表、歌诀与断词，首屏只留九宫自身。
+ * 算法与解读函数用动态 import（见 handleSixSubmit / sixInterpretation effect）。
+ */
+const SixSessionView = lazy(() =>
+  import('./features/six/SixSessionView').then((module) => ({ default: module.SixSessionView })),
+);
+
+const SixResultPage = lazy(() =>
+  import('./features/six/SixResultPage').then((module) => ({ default: module.SixResultPage })),
 );
 
 interface PendingInput {
@@ -150,12 +160,15 @@ export default function App() {
 
   /* ---------- 六宫线：进入结果页 ---------- */
   const sixRecordedRef = useRef<number | null>(null);
+  /** 六宫宫名表随六宫模块按需载入，历史记录写入时直接取用 */
+  const sixPalacesRef = useRef<readonly string[] | null>(null);
   useEffect(() => {
     if (sixState.phase !== 'FINAL_RESULT' || !sixResult || !sixPending) return;
     setView('six-result');
     if (sixRecordedRef.current === sixResult.createdAt) return;
     sixRecordedRef.current = sixResult.createdAt;
     soundEngine.play('complete');
+    const palaces = sixPalacesRef.current ?? [];
     const entry: HistoryEntry = {
       id: createHistoryId(sixResult.createdAt),
       createdAt: sixResult.createdAt,
@@ -163,9 +176,9 @@ export default function App() {
       inputSummary: `${sixPending.originLabel} ｜ ${sixPending.numbersNote}`,
       numbersText: `${sixResult.input.month}、${sixResult.input.day}、${sixResult.input.hour}`,
       palaces: [
-        SIX_PALACES[sixResult.steps[0].resultIndex],
-        SIX_PALACES[sixResult.steps[1].resultIndex],
-        SIX_PALACES[sixResult.steps[2].resultIndex],
+        palaces[sixResult.steps[0].resultIndex] ?? '',
+        palaces[sixResult.steps[1].resultIndex] ?? '',
+        palaces[sixResult.steps[2].resultIndex] ?? '',
       ],
       algorithmId: sixResult.input.algorithmId,
       algorithmVersion: sixResult.input.algorithmVersion,
@@ -208,7 +221,13 @@ export default function App() {
 
   /* ---------- 六宫线：输入提交 ---------- */
   const handleSixSubmit = useCallback(
-    (submission: SixSubmission) => {
+    async (submission: SixSubmission) => {
+      // 六宫算法与宫名表按需载入（六宫表单已在栈内，实际命中缓存）
+      const [{ createSixResult }, { SIX_PALACES }] = await Promise.all([
+        import('./features/six/sixCalculate'),
+        import('./features/six/sixConstants'),
+      ]);
+      sixPalacesRef.current = SIX_PALACES;
       const created = createSixResult({
         originIndex: submission.originIndex,
         originLabel: submission.originLabel,
@@ -316,14 +335,33 @@ export default function App() {
     });
   }, [result, pending]);
 
-  const sixInterpretation = useMemo(() => {
-    if (!sixResult || !sixPending) return null;
-    return sixComposeInterpretation(sixResult, {
-      inputSummary: sixPending.numbersNote,
-      originLabel: sixPending.originLabel,
-      topicId: sixPending.topicId,
-      numberNotes: sixPending.numberNotes,
-    });
+  /**
+   * 六宫解读（断词 / 歌诀 / 用神）在 sixMeanings 按需载入后异步生成：
+   * 首屏不再打包六宫文案表，九宫用户全程不会下载。
+   */
+  const [sixInterpretation, setSixInterpretation] = useState<SixInterpretation | null>(null);
+  useEffect(() => {
+    if (!sixResult || !sixPending) {
+      setSixInterpretation(null);
+      return;
+    }
+    let cancelled = false;
+    setSixInterpretation(null);
+    void (async () => {
+      const { sixComposeInterpretation } = await import('./features/six/sixMeanings');
+      if (cancelled) return;
+      setSixInterpretation(
+        sixComposeInterpretation(sixResult, {
+          inputSummary: sixPending.numbersNote,
+          originLabel: sixPending.originLabel,
+          topicId: sixPending.topicId,
+          numberNotes: sixPending.numberNotes,
+        }),
+      );
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [sixResult, sixPending]);
 
   const inputSummaryText = pending
@@ -415,18 +453,20 @@ export default function App() {
         ) : null}
 
         {view === 'six-session' && sixResult && sixPending ? (
-          <SixSessionView
-            result={sixResult}
-            machine={sixMachine}
-            reducedMotion={prefersReducedMotion}
-            inputSummary={
-              <>
-                <span className="badge badge--gold">六宫传统起课</span> {sixPending.originLabel}
-                <span className="faint"> ｜ {sixPending.numbersNote} ｜ 起数 {sixResult.input.month}、{sixResult.input.day}、{sixResult.input.hour}</span>
-              </>
-            }
-            onBackToInput={() => setView('six-form')}
-          />
+          <Suspense fallback={<p className="notice">正在载入六宫演算界面……</p>}>
+            <SixSessionView
+              result={sixResult}
+              machine={sixMachine}
+              reducedMotion={prefersReducedMotion}
+              inputSummary={
+                <>
+                  <span className="badge badge--gold">六宫传统起课</span> {sixPending.originLabel}
+                  <span className="faint"> ｜ {sixPending.numbersNote} ｜ 起数 {sixResult.input.month}、{sixResult.input.day}、{sixResult.input.hour}</span>
+                </>
+              }
+              onBackToInput={() => setView('six-form')}
+            />
+          </Suspense>
         ) : null}
 
         {view === 'result' && result && interpretation && pending ? (
@@ -459,24 +499,31 @@ export default function App() {
           />
         ) : null}
 
-        {view === 'six-result' && sixResult && sixInterpretation && sixPending ? (
-          <SixResultPage
-            result={sixResult}
-            interpretation={sixInterpretation}
-            inputSummary={sixPending.numbersNote}
-            numbersText={`${sixResult.input.month}、${sixResult.input.day}、${sixResult.input.hour}`}
-            numbersNote={sixPending.numbersNote}
-            calendar={sixPending.calendar ?? null}
-            onReplay={() => {
-              sixActions.restart();
-              setView('six-session');
-            }}
-            onNewDivination={() => {
-              sixActions.clear();
-              setSixPending(null);
-              setView('six-home');
-            }}
-          />
+        {view === 'six-result' && sixResult && sixPending ? (
+          <Suspense fallback={<p className="notice">正在载入六宫结果页……</p>}>
+            {sixInterpretation ? (
+              <SixResultPage
+                result={sixResult}
+                interpretation={sixInterpretation}
+                numbersText={`${sixResult.input.month}、${sixResult.input.day}、${sixResult.input.hour}`}
+                numbersSource={sixPending.numbersSource}
+                rawNumbers={sixPending.rawNumbers}
+                numbersNote={sixPending.numbersNote}
+                calendar={sixPending.calendar ?? null}
+                onReplay={() => {
+                  sixActions.restart();
+                  setView('six-session');
+                }}
+                onNewDivination={() => {
+                  sixActions.clear();
+                  setSixPending(null);
+                  setView('six-home');
+                }}
+              />
+            ) : (
+              <p className="notice">正在生成六宫解读……</p>
+            )}
+          </Suspense>
         ) : null}
       </main>
 

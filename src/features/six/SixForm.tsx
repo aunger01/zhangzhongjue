@@ -42,6 +42,8 @@ export interface SixSubmission {
   hour: number;
   numbersNote: string;
   numbersSource: SixNumbersSource;
+  /** 自报模式下的原始三数（农历模式为 null），结果页据此单独展示原始数与归约说明 */
+  rawNumbers: [number, number, number] | null;
   numberNotes: string[];
   calendar: CalendarInfo | null;
 }
@@ -159,6 +161,7 @@ export function SixForm({ onSubmit, initialSource = 'calendar' }: SixFormProps) 
       hour: numbers.hour,
       numbersNote,
       numbersSource: source,
+      rawNumbers: source === 'report' ? ([...raw] as [number, number, number]) : null,
       numberNotes,
       calendar: source === 'calendar' ? calendar : null,
     });

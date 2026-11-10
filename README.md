@@ -265,7 +265,7 @@ resultIndex = (startIndex + count − 1) mod 6
 ## 5. 项目结构
 
 ```
-palm-oracle/
+zhangzhongjue/
 ├── index.html
 ├── vite.config.ts            # Vite + Vitest 配置（base: './' 便于任意子路径部署）
 ├── vite.offline.config.ts    # 离线构建配置（历法包内联 + 经典脚本，供 file:// 双击）

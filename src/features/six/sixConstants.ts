@@ -359,10 +359,15 @@ export function getSixTopicVerse(topicId: SixTopicId | null, palaceName: SixPala
   return SIX_TOPIC_VERSES[topicId as SixVerseTopicId][palaceName];
 }
 
-/** 占人起课：女起重阴、男起重阳（PDF 第 5 页） */
+/**
+ * 占人起课：女起重阴、男起重阳（PDF 第 5 页）
+ *
+ * `note` 只写解释本身，**不含「女起重阴：」这类标题前缀**——
+ * 标题由调用方（规则说明页）自行加粗呈现，避免前缀重复出现。
+ */
 export const SIX_PERSON_ORIGIN = {
-  female: { origin: '留连', note: '女起重阴：六神中留连是重阴，故女起留连。' },
-  male: { origin: '小吉', note: '男起重阳：六神中小吉是重阳，故男起小吉。' },
+  female: { origin: '留连', note: '六神中留连是重阴，故女起留连。' },
+  male: { origin: '小吉', note: '六神中小吉是重阳，故男起小吉。' },
 } as const satisfies Record<'female' | 'male', { origin: SixPalaceName; note: string }>;
 
 export type SixPersonGender = keyof typeof SIX_PERSON_ORIGIN;
